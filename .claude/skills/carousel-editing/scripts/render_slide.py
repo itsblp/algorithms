@@ -60,7 +60,8 @@ def draw_tracked(draw, x, y, text, font, size, tracking, fill):
 
 
 def render(spec):
-    c = {**DEFAULTS, **spec}
+    no_photo = {} if spec.get("photo") else {"color": "#111111", "gradient": 0, "shadow": 0}
+    c = {**DEFAULTS, **no_photo, **spec}
     if c.get("photo"):
         base = cover(Image.open(c["photo"]).convert("RGB"), c["focus_y"])
     else:
