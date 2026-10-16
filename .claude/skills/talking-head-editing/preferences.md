@@ -66,21 +66,26 @@ hook_style: "plain white Inter Bold text, thin outline, no box — same family a
 hook_max_words: 7
 ```
 
-## Effects (from the user's reference reel, 2026-10-16)
+## Effects (matched to the user's reference screen recording, 2026-10-16)
 ```yaml
 text_behind_head:
-  use: 1 per video, on the hook or the single biggest idea word   # default
-  text: 1–2 words, UPPERCASE, Inter Display SemiBold, 260–320 px, cream "#FBF4D6"
-  placement: y ≈ 380–560 so the head covers the middle of the word
-  duration: 1.5–2.5 s, anim: rise
+  style: marquee   # one quoted line scrolls right -> left at eye level, passing BEHIND the head
+  use: when the speaker quotes someone else (a parent, a boss, a critic, the old inner voice), at most 1–2 per video
+  text: the quote in double quotes, sentence case, ≤ 12 words; Inter Display Bold ~104 px, yellow "#F5D547"
+  duration: ≈ (1080 + text width px) / 1000 s, so it moves at ~1000 px/s (≈ 3 s for 10 words)
+  captions: leave a gap in the burned captions while the marquee runs
+  alt: style "block" (1–2 big static words behind the head) only if the user asks for it
 photo_overlay:
-  use: 1–3 per video, when the speaker names a specific place, object, person, or receipt   # default
+  style: plain     # clean rectangle: no border, tilt or shadow; hard cut in and out
+  placement: above_head (centered on the face, overlapping the hairline slightly)
+  width: ~430 px (about 40% of the frame)
+  use: 1–3 per video, the moment the speaker names a person, place, past self, or "dozens of people"
+  sequence: for plurals ("my team", "dozens of people"), flip 2–3 photos in the same spot ("paths")
+  duration: 1–1.5 s per photo
   source: the user's own photos from the post's Drive folder or a Story Bank atom's Visual assets
-  style: white border 14 px, rotate ±3–5°, soft shadow, anim: pop, 1.5–2.5 s
-  placement: auto (never over the face)
 punch_in:
-  use: every emphasis line and every jump cut that would otherwise look like a skip
-  scale: 112–120%, hard cut (ease 0); alternate in/out, never two of the same scale in a row
+  use: on emphasis lines and to hide jump cuts; hard cut between a medium shot and ~118%
+  rule: alternate in/out, never two of the same scale in a row
 ```
 
 ## Audio
