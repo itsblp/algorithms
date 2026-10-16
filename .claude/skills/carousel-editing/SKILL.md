@@ -33,7 +33,7 @@ Target slide count comes from `preferences.md` (default 7: cover + 5 body + CTA)
 
 | Slide | Job | Rules |
 |---|---|---|
-| 1 — Cover | Stop the scroll | ≤ 8 words in the headline, plus an optional subline. Promise a specific outcome, number, or tension. Must read at thumbnail size. Use a swipe cue (→ or "swipe") unless preferences say otherwise. |
+| 1 — Cover | Stop the scroll | ≤ 8 words in the largest type size, plus supporting lines in smaller sizes. Promise a specific outcome, number, or tension. Must read at thumbnail size. Use a swipe cue (→ or "swipe") unless preferences say otherwise. |
 | 2 — Setup | Earn the swipe | Why this matters / the problem in 1–2 lines. Some formats skip it and go straight to item 1. |
 | Body slides | Deliver | **One idea per slide.** Headline ≤ 8 words + body ≤ 25 words. Number them if it's a list. |
 | Second-to-last | Payoff | The best or most surprising point goes here, or on slide 2. Never bury it in the middle. |
@@ -51,6 +51,8 @@ TikTok photo posts can auto-advance and play with a sound, so every slide should
 Output the copy as a table: `slide #, headline, body, visual note`.
 
 ### 4. Layout spec
+If `preferences.md` defines a named **Look** (sizes, placement, font), it replaces the generic geometry and type sizes below. Keep only the safe-area limits.
+
 Use the 1080×1920 master (see the specs skill):
 
 ```
@@ -78,8 +80,23 @@ Typography and colors come from `preferences.md`. General rules:
 - [ ] Exactly one CTA, on the last slide
 - [ ] Files named `NN_tiktok.png` (1080×1920) and `NN_ig.png` (1080×1350), sRGB
 
-### 6. Export
-With a 1080×1920 master per slide, create the IG version by center-cropping:
+### 6. Render and export
+**Photo + stacked type slides (the user's default style):** write one JSON spec per slide and render with `scripts/render_slide.py`. It cover-fits the photo, applies the shade and shadow, sets tracked mixed-size type, and writes both `tiktok/NN.png` (1080×1920) and `ig/NN.png` (the 4:5 crop) in one go:
+
+```json
+{"photo": "photos/studio.jpg", "name": "01", "out_dir": "content/<slug>", "focus_y": 0.3,
+ "lines": [{"text": "I spent", "size": 125},
+           {"text": "$40k on my", "size": 195}, {"text": "first studio", "size": 195},
+           {"text": "(here's what I'd never do again)", "size": 72, "gap_before": 30}]}
+```
+
+```bash
+python3 scripts/render_slide.py content/<slug>/specs/*.json
+```
+
+Spec keys and defaults are listed at the top of the script. Override `color`, `font`, `tracking`, `bottom` and the others per slide only when preferences say to. After rendering, **look at every `ig/NN.png`** to check legibility against the photo: adjust `focus_y`, raise `gradient`, or pick another photo if any word sits on a busy or bright patch.
+
+For other layouts, with a 1080×1920 master per slide, create the IG version by center-cropping:
 
 ```bash
 mkdir -p ig && for f in tiktok/*.png; do
