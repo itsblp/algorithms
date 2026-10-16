@@ -66,6 +66,23 @@ hook_style: "plain white Inter Bold text, thin outline, no box — same family a
 hook_max_words: 7
 ```
 
+## Effects (from the user's reference reel, 2026-10-16)
+```yaml
+text_behind_head:
+  use: 1 per video, on the hook or the single biggest idea word   # default
+  text: 1–2 words, UPPERCASE, Inter Display SemiBold, 260–320 px, cream "#FBF4D6"
+  placement: y ≈ 380–560 so the head covers the middle of the word
+  duration: 1.5–2.5 s, anim: rise
+photo_overlay:
+  use: 1–3 per video, when the speaker names a specific place, object, person, or receipt   # default
+  source: the user's own photos from the post's Drive folder or a Story Bank atom's Visual assets
+  style: white border 14 px, rotate ±3–5°, soft shadow, anim: pop, 1.5–2.5 s
+  placement: auto (never over the face)
+punch_in:
+  use: every emphasis line and every jump cut that would otherwise look like a skip
+  scale: 112–120%, hard cut (ease 0); alternate in/out, never two of the same scale in a row
+```
+
 ## Audio
 ```yaml
 master_music: none            # default — add a platform-native sound in each app

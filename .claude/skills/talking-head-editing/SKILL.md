@@ -140,10 +140,17 @@ Work in `content/<video-slug>/` with the raw A-roll and a `broll/` folder.
 
 1. `python3 scripts/transcribe.py raw.mp4 > words_raw.json`. Write the hook, structure and cut list from it (steps 1–3).
 2. Apply the cuts → `cut.mp4` (see "Applying cuts" above).
-3. Build the B-roll overlay from the EDL (step 4). For each B-roll shot, trim and crop it to 1080×1920 and `overlay` it on `cut.mp4` with `enable='between(t,IN,OUT)'`, keeping `cut.mp4`'s audio. Apply punch-ins on A-roll segments with `crop`+`scale` inside the same `enable` windows. Use `-filter_complex_script` to keep the filter graph in a file.
-4. `python3 scripts/transcribe.py cut.mp4 > words.json`, fix any wrong words, then `python3 scripts/kinetic_captions.py words.json > captions.ass` (pass `--size`, `--outline`, `--words` from preferences).
-5. Final export: burn captions plus the hook overlay (a second ASS style, or `drawtext` with Inter Bold), loudnorm, and the export settings from the specs skill → `final.mp4`.
-6. Extract 3 cover-frame candidates (`-ss` at strong expressions), run the QA checklist on `final.mp4`, and grab stills at about 6 points to visually check the safe zones and captions.
+3. **Signature effects** with `scripts/effects.py cut.mp4 effects.json fx.mp4`. The effects JSON schema is in the script's docstring. It does three things in one pass:
+   - **Punch-ins** anchored on the face. These are hard cuts by default, with `ease` available for a smooth push.
+   - **Text behind the head:** big type placed behind the person using a person mask (MediaPipe selfie segmenter, bundled in `models/`).
+   - **Photo overlays:** a bordered, slightly tilted card that pops in, placed automatically in the free space above or below the face.
+
+   Use the counts and rules in `preferences.md` under **Effects**. After rendering, check stills at each effect for clean edges around the hair and to confirm the face isn't covered.
+   Setup in a fresh container: `apt-get install -y libegl1 libgles2 && pip install mediapipe opencv-python-headless`.
+4. Build the B-roll overlay from the EDL (step 4) on `fx.mp4`. For each B-roll shot, trim and crop it to 1080×1920 and `overlay` it on `fx.mp4` with `enable='between(t,IN,OUT)'`, keeping its audio (punch-ins are already done by `effects.py`). Use `-filter_complex_script` to keep the filter graph in a file.
+5. `python3 scripts/transcribe.py cut.mp4 > words.json`, fix any wrong words, then `python3 scripts/kinetic_captions.py words.json > captions.ass` (pass `--size`, `--outline`, `--words` from preferences).
+6. Final export: burn captions plus the hook overlay (a second ASS style, or `drawtext` with Inter Bold), loudnorm, and the export settings from the specs skill → `final.mp4`.
+7. Extract 3 cover-frame candidates (`-ss` at strong expressions), run the QA checklist on `final.mp4`, and grab stills at about 6 points to visually check the safe zones and captions.
 
 ## Deliverables summary
 Unless the user asks for less, end with: chosen hook, cut list, `captions.ass` + `captions.srt`, zoom/B-roll plan, export command(s), QA results, and post copy. Save files next to the source video or in a `content/<video-slug>/` folder.
