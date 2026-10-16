@@ -30,6 +30,10 @@ y: 220 → 1440 (top 220px — tabs/header; bottom 480px — username, caption, 
 - The right 150px holds like/comment/share/audio buttons on both apps.
 - Backgrounds and B-roll can and should fill the full frame. Only *information* has to stay inside the box.
 
+**Every text element counts:** titles, captions, credits and series tags ("@handle · series") all stay inside y 220–1440. TikTok puts the handle at about y 1500–1620 and the caption just below it. Text placed at 77–88% of the frame height lands directly on it. This happened to the user on 2026-10-16.
+
+**QA check (required before export):** `python3 scripts/safe_zone_check.py final.mp4 zones.png` shades the UI zones in cyan on sampled frames. Look at the image. No text and no face may sit in cyan.
+
 ### Cover / grid crop
 
 Both profile grids show a **3:4 center crop** (1080×1440 from the 1920 frame, so y 240 → 1680).

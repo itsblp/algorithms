@@ -89,7 +89,7 @@ Dialogue: 0,0:00:00.00,0:00:00.80,Caption,,0,0,0,,THIS IS {\c&H0000E5FF&}HOW{\c&
 
 ### 7. QA checklist (run before calling an edit done)
 - [ ] Hook lands in < 3 s, and the hook overlay is readable in < 2 s
-- [ ] No text or face behind the right 150px or bottom 480px
+- [ ] No text or face behind the right 150px or bottom 480px. Run `../short-form-platform-specs/scripts/safe_zone_check.py` on `final.mp4` and look at the sheet. A series or credit tag goes at the top (y ≈ 260–320), never under the captions.
 - [ ] Captions match the audio word for word, with no typos, and digits for numbers
 - [ ] No double captions (if burned in, app auto-captions are off)
 - [ ] Visual change at least every 4 s
