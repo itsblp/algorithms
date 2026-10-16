@@ -13,7 +13,7 @@ Before doing anything, load these:
 
 | Input | What to do |
 |---|---|
-| Raw video file(s) | Probe with `ffprobe`. If no transcript is provided, check whether `whisper` / `whisper-cpp` / `faster-whisper` is installed, transcribe with word timestamps, then follow the full workflow. If nothing can transcribe, ask the user for a transcript or captions export. |
+| Raw talking-head take(s) + B-roll clips | Probe everything with `ffprobe`. Transcribe with `scripts/transcribe.py` (run `pip install faster-whisper` first if it's missing), then run the full workflow and the **Full pipeline** at the bottom. Claude does the whole edit; there's no CapCut handoff unless the user asks for one. |
 | Transcript (with or without timestamps) | Run the full workflow and output a cut list and captions. |
 | Script / idea, not yet filmed | Run steps 1–2 only. Return a tightened script with hook options, plus filming notes (framing, eyeline, safe zone). |
 | Finished edit to review | Run the QA checklist (step 7) and return specific timestamped fixes. |
@@ -22,7 +22,7 @@ Before doing anything, load these:
 
 ### 1. Hook (first 1–3 seconds)
 - Find the strongest line in the whole take. If it isn't in the first 3 s, **move it to the front** (a cold-open cut).
-- Give 3 hook options in different styles: **bold claim**, **question / curiosity gap**, and **"you're doing X wrong" / pattern interrupt**. Recommend one.
+- Give 3 hook options in different styles: **bold claim**, **question / curiosity gap**, and **"you're doing X wrong" / pattern interrupt**. If the preferences' creative references lean toward storytelling, swap one of these for a **personal-moment opener** ("Last year I almost…"). Recommend one.
 - Hook text overlay: ≤ 7 words, on screen from frame 1 to about 2.5 s, placed in the upper-middle of the safe zone (y ≈ 300–600) so it doesn't collide with captions.
 
 ### 2. Structure
@@ -35,14 +35,24 @@ Produce a cut list as a table: `#, in, out, keep/cut, reason`.
 - Never cut mid-word. Use word timestamps to snap.
 - If the cut list will be applied with ffmpeg, also emit a `select`/`aselect` filter or a concat list (see "Applying cuts" below).
 
-### 4. Punch-ins and visual rhythm
-- Hide jump cuts by alternating framing: **100% → 110–120% punch-in** on emphasis lines, back out on the next cut. Don't zoom twice in a row on the same scale.
-- Add a visual change (punch-in, B-roll, graphic, or text pop) every **2–4 seconds**. Talking heads without changes lose people.
+### 4. Punch-ins, B-roll weave and visual rhythm
+- Hide jump cuts by alternating framing: **100% → `punch_in_scale`** on emphasis lines, back out on the next cut. Don't zoom twice in a row on the same scale.
+- Add a visual change (cut, punch-in, or B-roll switch) at the `visual_change_every_sec` rate from preferences. Talking heads without changes lose people.
+- **Weave B-roll over the voice:** the audio stays continuous from the talking head while the picture cuts to B-roll for `broll_ratio` of the runtime.
+  - Match each B-roll shot to the noun or feeling in the line being spoken (literal first, then atmospheric).
+  - Keep each B-roll shot 1–2 s and run 1–3 shots in a row, then return to the face for the next claim or punchline. The face is the anchor: the hook, the turn, and the CTA are always on camera.
+  - Pick the strongest 1–2 s inside each clip: motion that's already happening, not the start of a pan.
+  - Fill 9:16 from horizontal B-roll with a center crop (`crop=ih*9/16:ih,scale=1080:1920`), never letterbox.
+  - Cut B-roll on the beat of speech (at word boundaries), not mid-word.
+  - Grade nothing beyond matching exposure between shots. Keep the natural look.
+  - Write the plan as an EDL table: `#, timeline in, timeline out, source (A-roll / clip name), source in, scale, note`.
 - Face stays inside the safe zone at every zoom level: eyes around y ≈ 650–800, never behind the right-side buttons.
 - For each B-roll / graphic suggestion, give: timestamp, what to show, and why (it illustrates the noun the speaker just said).
 
 ### 5. Captions (burned in)
-Generate an `.ass` subtitle file (preferred: supports styling and word highlight) and an `.srt` fallback.
+If `caption_animation: kinetic`, generate captions with `scripts/kinetic_captions.py` from word timestamps of the **cut** video (re-transcribe `cut.mp4` so timings match). It reveals each word as it's spoken, with a quick pop-in, inside a stable 2–3-word line. Fix transcription errors in `words.json` before generating. The static template below is for non-kinetic styles.
+
+Otherwise, generate an `.ass` subtitle file (preferred: supports styling and word highlight) and an `.srt` fallback.
 - Style comes from `preferences.md` (`caption_*` keys).
 - **1–2 lines, max ~4 words per line, ~2–3 words visible per chunk** for high-energy edits.
 - Position: centered, baseline around **y ≈ 1250** on 1080×1920 (above both apps' bottom UI, below the face). In ASS: `PlayResX: 1080`, `PlayResY: 1920`, `Alignment: 2`, `MarginV: 670`.
@@ -121,6 +131,17 @@ ffmpeg -i cut.mp4 -vf "ass=captions.ass" -c:v libx264 -profile:v high -pix_fmt y
 ```
 
 If the user edits in CapCut / Premiere / DaVinci instead, deliver the cut list as a timecoded table plus the `.srt`, and describe punch-ins as "scale 115% at 00:04.20". Don't push ffmpeg on someone who doesn't want it.
+
+## Full pipeline (Claude does the edit)
+
+Work in `content/<video-slug>/` with the raw A-roll and a `broll/` folder.
+
+1. `python3 scripts/transcribe.py raw.mp4 > words_raw.json`. Write the hook, structure and cut list from it (steps 1–3).
+2. Apply the cuts → `cut.mp4` (see "Applying cuts" above).
+3. Build the B-roll overlay from the EDL (step 4). For each B-roll shot, trim and crop it to 1080×1920 and `overlay` it on `cut.mp4` with `enable='between(t,IN,OUT)'`, keeping `cut.mp4`'s audio. Apply punch-ins on A-roll segments with `crop`+`scale` inside the same `enable` windows. Use `-filter_complex_script` to keep the filter graph in a file.
+4. `python3 scripts/transcribe.py cut.mp4 > words.json`, fix any wrong words, then `python3 scripts/kinetic_captions.py words.json > captions.ass` (pass `--size`, `--outline`, `--words` from preferences).
+5. Final export: burn captions plus the hook overlay (a second ASS style, or `drawtext` with Inter Bold), loudnorm, and the export settings from the specs skill → `final.mp4`.
+6. Extract 3 cover-frame candidates (`-ss` at strong expressions), run the QA checklist on `final.mp4`, and grab stills at about 6 points to visually check the safe zones and captions.
 
 ## Deliverables summary
 Unless the user asks for less, end with: chosen hook, cut list, `captions.ass` + `captions.srt`, zoom/B-roll plan, export command(s), QA results, and post copy. Save files next to the source video or in a `content/<video-slug>/` folder.
