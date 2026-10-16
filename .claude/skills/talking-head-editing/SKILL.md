@@ -1,0 +1,126 @@
+---
+name: talking-head-editing
+description: Edit talking-head (person-speaking-to-camera) short-form videos for Instagram Reels and TikTok in the user's house style. Use when the user shares a talking-head clip, transcript, or script, or asks to cut, tighten, caption, add B-roll or zooms to, plan, review, or export a talking-head/face-cam/vlog-style video, Reel, or TikTok. Produces a hook rewrite, cut list, burned-in caption file, zoom/B-roll plan, ffmpeg commands, and post copy.
+---
+
+# Talking-head video editing
+
+Before doing anything, load these:
+1. `../short-form-platform-specs/SKILL.md` — sizes, safe zones, export and cross-posting rules. Every output must be valid on **both** IG Reels and TikTok.
+2. `preferences.md` (this folder) — the user's house style. **Preferences override the defaults in this file.** If the user states a new preference during a session, offer to save it to `preferences.md`.
+
+## Inputs you might get
+
+| Input | What to do |
+|---|---|
+| Raw video file(s) | Probe with `ffprobe`. If no transcript is provided, check whether `whisper` / `whisper-cpp` / `faster-whisper` is installed, transcribe with word timestamps, then follow the full workflow. If nothing can transcribe, ask the user for a transcript or captions export. |
+| Transcript (with or without timestamps) | Run the full workflow and output a cut list and captions. |
+| Script / idea, not yet filmed | Run steps 1–2 only. Return a tightened script with hook options, plus filming notes (framing, eyeline, safe zone). |
+| Finished edit to review | Run the QA checklist (step 7) and return specific timestamped fixes. |
+
+## Workflow
+
+### 1. Hook (first 1–3 seconds)
+- Find the strongest line in the whole take. If it isn't in the first 3 s, **move it to the front** (a cold-open cut).
+- Give 3 hook options in different styles: **bold claim**, **question / curiosity gap**, and **"you're doing X wrong" / pattern interrupt**. Recommend one.
+- Hook text overlay: ≤ 7 words, on screen from frame 1 to about 2.5 s, placed in the upper-middle of the safe zone (y ≈ 300–600) so it doesn't collide with captions.
+
+### 2. Structure
+Hook → context in one line → payoff (2–4 tight beats) → CTA or loop-back. Cut anything that doesn't serve the payoff. Target length comes from `preferences.md`.
+
+### 3. Cut list (jump cuts)
+Produce a cut list as a table: `#, in, out, keep/cut, reason`.
+- Remove filler words (um, uh, like, so, you know, basically), false starts, repeated takes (keep the **last** clean take unless an earlier one has better energy), breaths between sentences, and dead air longer than the `max_pause` preference.
+- Keep about 2–4 frames of handle on each side of a cut so words don't clip.
+- Never cut mid-word. Use word timestamps to snap.
+- If the cut list will be applied with ffmpeg, also emit a `select`/`aselect` filter or a concat list (see "Applying cuts" below).
+
+### 4. Punch-ins and visual rhythm
+- Hide jump cuts by alternating framing: **100% → 110–120% punch-in** on emphasis lines, back out on the next cut. Don't zoom twice in a row on the same scale.
+- Add a visual change (punch-in, B-roll, graphic, or text pop) every **2–4 seconds**. Talking heads without changes lose people.
+- Face stays inside the safe zone at every zoom level: eyes around y ≈ 650–800, never behind the right-side buttons.
+- For each B-roll / graphic suggestion, give: timestamp, what to show, and why (it illustrates the noun the speaker just said).
+
+### 5. Captions (burned in)
+Generate an `.ass` subtitle file (preferred: supports styling and word highlight) and an `.srt` fallback.
+- Style comes from `preferences.md` (`caption_*` keys).
+- **1–2 lines, max ~4 words per line, ~2–3 words visible per chunk** for high-energy edits.
+- Position: centered, baseline around **y ≈ 1250** on 1080×1920 (above both apps' bottom UI, below the face). In ASS: `PlayResX: 1080`, `PlayResY: 1920`, `Alignment: 2`, `MarginV: 670`.
+- Highlight the key word in each chunk with the accent color.
+- Fix transcription errors, brand names and numbers by hand. Write numbers as digits ("3 tips", not "three tips").
+- No captions over the hook overlay's time range if they would overlap. Shift one or the other.
+
+ASS style template (fill from preferences):
+
+```
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,Montserrat,78,&H00FFFFFF,&H0000E5FF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,6,2,2,80,170,670,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:00.80,Caption,,0,0,0,,THIS IS {\c&H0000E5FF&}HOW{\c&H00FFFFFF&}
+```
+(ASS colors are `&HAABBGGRR`, so the hex `#FFE500` becomes `&H0000E5FF`. MarginR is 170 to keep text clear of the button column.)
+
+### 6. Audio
+- Light cleanup: high-pass at ~80 Hz, gentle de-ess, and noise reduction only if there's audible hiss (`afftdn` lightly; heavy settings sound robotic).
+- Normalize to −14 LUFS / −1 dBTP (see the specs skill).
+- Music follows the cross-posting rule in the specs skill. The default is voice-only master.
+- Optional SFX (whoosh on punch-ins, pop on text) only if `sfx: on` in preferences.
+
+### 7. QA checklist (run before calling an edit done)
+- [ ] Hook lands in < 3 s, and the hook overlay is readable in < 2 s
+- [ ] No text or face behind the right 150px or bottom 480px
+- [ ] Captions match the audio word for word, with no typos, and digits for numbers
+- [ ] No double captions (if burned in, app auto-captions are off)
+- [ ] Visual change at least every 4 s
+- [ ] No clipped words at cuts, no audio pops (add 10 ms fades at cut points if needed)
+- [ ] −14 LUFS ±1, peaks ≤ −1 dBTP
+- [ ] 1080×1920, H.264, `+faststart`, no watermark
+- [ ] Cover frame chosen, with cover text inside y 300–1400
+- [ ] Ending loops cleanly or ends on a CTA (per preferences)
+
+### 8. Post copy
+Output one block that works on both apps:
+- **Caption:** hook line with a search keyword → 1–2 lines of value → CTA. ≤ 300 chars.
+- **Hashtags:** 3–5, specific to the niche (no #fyp / #viral filler).
+- **Cover text:** ≤ 5 words.
+- **On-screen keyword:** say the main keyword out loud in the first 5 s and put it in the overlay too. Both apps use speech and on-screen text for search.
+
+## Applying cuts with ffmpeg
+
+For a keep-list of `(start, end)` segments in seconds, build a filter script rather than a giant command line:
+
+```bash
+# segments.txt -> one "start end" per line; generates trim+concat filtergraph
+python3 - <<'PY' segments.txt > cuts.filter
+import sys
+segs=[tuple(map(float,l.split())) for l in open(sys.argv[1]) if l.strip()]
+parts=[]
+for i,(s,e) in enumerate(segs):
+    parts.append(f"[0:v]trim={s}:{e},setpts=PTS-STARTPTS[v{i}];")
+    parts.append(f"[0:a]atrim={s}:{e},asetpts=PTS-STARTPTS,afade=t=in:d=0.01,afade=t=out:st={e-s-0.01:.3f}:d=0.01[a{i}];")
+parts.append("".join(f"[v{i}][a{i}]" for i in range(len(segs)))+f"concat=n={len(segs)}:v=1:a=1[v][a]")
+print("".join(parts))
+PY
+ffmpeg -i raw.mp4 -filter_complex_script cuts.filter -map "[v]" -map "[a]" -c:v libx264 -crf 16 -c:a aac -b:a 320k cut.mp4
+```
+
+Then burn captions and do the final export (settings from the specs skill):
+
+```bash
+ffmpeg -i cut.mp4 -vf "ass=captions.ass" -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 18 \
+  -af "loudnorm=I=-14:TP=-1:LRA=11" -c:a aac -b:a 320k -ar 48000 -movflags +faststart final.mp4
+```
+
+If the user edits in CapCut / Premiere / DaVinci instead, deliver the cut list as a timecoded table plus the `.srt`, and describe punch-ins as "scale 115% at 00:04.20". Don't push ffmpeg on someone who doesn't want it.
+
+## Deliverables summary
+Unless the user asks for less, end with: chosen hook, cut list, `captions.ass` + `captions.srt`, zoom/B-roll plan, export command(s), QA results, and post copy. Save files next to the source video or in a `content/<video-slug>/` folder.
