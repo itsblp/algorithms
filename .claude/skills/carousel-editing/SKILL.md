@@ -58,7 +58,7 @@ If `preferences.md` defines a named **Look** (sizes, placement, font), it replac
 Use the 1080×1920 master (see the specs skill):
 
 ```
-Text-safe area:     x 80 → 930, y 330 → 1500
+Text-safe area:     x 80 → 880, y 330 → 1400
 Headline zone:      top of the text-safe area (starting at y ≈ 360)
 Slide counter / handle: inside the band, e.g. bottom-left at y ≈ 1560 — small, 50% opacity
 Background:         full-bleed 1080×1920 (bleeds past the 4:5 crop on purpose)
@@ -74,7 +74,7 @@ Typography and colors come from `preferences.md`. General rules:
 ### 5. QA checklist
 - [ ] Cover headline readable at thumbnail size (≈ 25% scale), ≤ 8 words
 - [ ] One idea per slide, body ≤ 25 words
-- [ ] All text inside x 80–930 / y 330–1500 on the 1080×1920 master
+- [ ] All text inside x 80–880 / y 330–1400 on the 1080×1920 master
 - [ ] IG export is a 1080×1350 center crop (y 285–1635) and nothing important is cut
 - [ ] Consistent margins, fonts and headline position across all slides
 - [ ] Contrast at least 4.5:1, no text over busy image areas without a scrim
@@ -106,7 +106,7 @@ mkdir -p ig && for f in tiktok/*.png; do
 done
 ```
 
-If the user builds in **Canva**: document size 1080×1920, a guide box at y 285–1635 and text-safe guides at x 80/930 and y 330/1500. Download as PNG for TikTok, then use Resize → 1080×1350 (or the crop command above) for IG. If the Canva connector is available in the session, offer to generate or fill the design directly.
+If the user builds in **Canva**: document size 1080×1920, a guide box at y 285–1635 and text-safe guides at x 80/880 and y 330/1400. Download as PNG for TikTok, then use Resize → 1080×1350 (or the crop command above) for IG. If the Canva connector is available in the session, offer to generate or fill the design directly.
 
 ### 7. Post copy (same for both apps)
 - **Caption:** the cover promise restated with a search keyword → a 1-line teaser of the best slide → CTA. ≤ 300 chars.

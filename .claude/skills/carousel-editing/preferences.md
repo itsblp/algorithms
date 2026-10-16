@@ -42,7 +42,7 @@ line_height: 0.93
 text_color: "#FBF4D6"         # warm cream
 size_scale: {lead: 125, hero: 195, context: 115, note: 72}   # px on the 1080-wide canvas; shrink a line only if it overflows
 text_align: left
-text_block_bottom_y: 1470     # on the 1080×1920 master (≈ y 1185 in the 4:5 IG crop)
+text_block_bottom_y: 1380     # on the 1080×1920 master (≈ y 1095 in the 4:5 IG crop); TikTok photo mode shows the handle below this
 bottom_shade: 0.3             # bottom gradient opacity
 text_shadow: 0.25             # soft, blurred, barely visible
 accent: none

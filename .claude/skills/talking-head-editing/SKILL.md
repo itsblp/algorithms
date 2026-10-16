@@ -73,13 +73,13 @@ WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Caption,Montserrat,78,&H00FFFFFF,&H0000E5FF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,6,2,2,80,170,670,1
+Style: Caption,Montserrat,78,&H00FFFFFF,&H0000E5FF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,6,2,2,200,200,670,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 0,0:00:00.00,0:00:00.80,Caption,,0,0,0,,THIS IS {\c&H0000E5FF&}HOW{\c&H00FFFFFF&}
 ```
-(ASS colors are `&HAABBGGRR`, so the hex `#FFE500` becomes `&H0000E5FF`. MarginR is 170 to keep text clear of the button column.)
+(ASS colors are `&HAABBGGRR`, so the hex `#FFE500` becomes `&H0000E5FF`. Margins of 200 on both sides keep captions centered and clear of TikTok's button column, which starts at about x 900, and of the side crop on tall phones.)
 
 ### 6. Audio
 - Light cleanup: high-pass at ~80 Hz, gentle de-ess, and noise reduction only if there's audible hiss (`afftdn` lightly; heavy settings sound robotic).
@@ -89,7 +89,7 @@ Dialogue: 0,0:00:00.00,0:00:00.80,Caption,,0,0,0,,THIS IS {\c&H0000E5FF&}HOW{\c&
 
 ### 7. QA checklist (run before calling an edit done)
 - [ ] Hook lands in < 3 s, and the hook overlay is readable in < 2 s
-- [ ] No text or face behind the right 150px or bottom 480px. Run `../short-form-platform-specs/scripts/safe_zone_check.py` on `final.mp4` and look at the sheet. A series or credit tag goes at the top (y ≈ 260–320), never under the captions.
+- [ ] All text and the face are inside x 80–880, y 260–1400, and captions are inside x 200–880. Run `../short-form-platform-specs/scripts/safe_zone_check.py` on `final.mp4` and look at the sheet. A series or credit tag goes at the top (y ≈ 260–320), never under the captions.
 - [ ] Captions match the audio word for word, with no typos, and digits for numbers
 - [ ] No double captions (if burned in, app auto-captions are off)
 - [ ] Visual change at least every 4 s

@@ -54,7 +54,7 @@ caption_outline_px: 4         # thin black outline for legibility on any B-roll
 caption_shadow_px: 0          # default
 caption_words_per_chunk: 2-3
 caption_animation: kinetic    # word-by-word reveal timed to speech, with a quick pop-in on each word
-caption_position_y: 1250      # default — baseline; keep between 1100 and 1400
+caption_position_y: 1250      # default — baseline; never below 1300 (a 2-line caption must end above y 1400)
 emoji_in_captions: false
 punctuation_in_captions: false    # default — drop commas/periods; keep ? and !
 ```
@@ -104,6 +104,6 @@ cta_text: "Comment \"KEYWORD\" and I'll send you ___"   # Claude picks a one-wor
 
 ## Notes from past edits
 <!-- Claude appends dated one-line learnings here when the user gives feedback. -->
-- 2026-10-16: Old TikToks had the title and captions at about 77–88% of the frame height, which collided with the TikTok handle. Keep all text inside y 220–1440 and run safe_zone_check before every export.
+- 2026-10-16: Old TikToks had the title and captions at about 77–88% of the frame height, which collided with the TikTok handle. Keep all text inside x 80–880, y 260–1400 (tightened 2026-10-16 from a TikTok screenshot) and run safe_zone_check before every export.
 - 2026-10-16: Typical framing is a medium shot, standing, with a handheld mic near the chin and little headroom (top of head at about y 300–400). Above-head photos come out small (about 300 px). For bigger photos, use `placement: auto` (chest), or ask the user to leave more headroom when filming.
 - 2026-10-16: For real edits, ask for the original camera files from Drive, not TikTok downloads. Downloads are 576×1024, recompressed, and already have captions burned in.

@@ -24,6 +24,8 @@ p.add_argument("--keep-punct", action="store_true")
 p.add_argument("--pop-ms", type=int, default=90)
 p.add_argument("--gap", type=float, default=0.35, help="silence (s) that forces a new chunk")
 a = p.parse_args()
+if not 1000 <= a.baseline <= 1300:
+    p.error("--baseline must be 1000-1300 so captions stay clear of the TikTok/IG interface (safe zone ends at y 1400)")
 
 words = json.load(open(a.words))
 
@@ -58,7 +60,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Caption,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,{a.outline},0,2,80,170,{1920 - a.baseline},1
+Style: Caption,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,{a.outline},0,2,200,200,{1920 - a.baseline},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text""")

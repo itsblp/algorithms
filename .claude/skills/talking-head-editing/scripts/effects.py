@@ -11,7 +11,8 @@ effects.json (all times in seconds on INPUT's timeline; every list is optional):
   "text_behind": [
     {"start": 5.0, "end": 8.0, "style": "marquee",
      "text": "\"you had it so good at Google. why would you leave?\""},
-      # DEFAULT style. One line scrolls right -> left at eye level and passes BEHIND the head
+      # DEFAULT style. One line scrolls right -> left at eye level and passes BEHIND the head,
+      # clipped to the safe band x 80-880 with soft edges so it never runs under the app's buttons
       # (person mask). Use it for a quoted voice: what someone said to you, the critic, the inner
       # monologue. Optional: color (default "#F5D547"), size (104), font, y (baseline px; default eyes)
     {"start": 0, "end": 2.4, "style": "block", "lines": [{"text": "FREEDOM", "size": 300}],
@@ -50,7 +51,8 @@ MODELS = os.path.join(HERE, "..", "models")
 FONT_DIR = "/usr/share/fonts/opentype/inter"
 BLOCK_FONT = os.path.join(FONT_DIR, "InterDisplay-SemiBold.otf")
 MARQUEE_FONT = os.path.join(FONT_DIR, "InterDisplay-Bold.otf")
-SAFE_TOP, SAFE_BOTTOM = 220, 1440  # combined IG/TikTok safe zone on 1080x1920
+SAFE_TOP, SAFE_BOTTOM = 260, 1400  # combined IG/TikTok safe zone on 1080x1920
+SAFE_LEFT, SAFE_RIGHT = 80, 880
 
 
 def hex_rgb(h):
@@ -167,7 +169,7 @@ def place_photo(e, img, face, W):
             s = max(bottom - SAFE_TOP, 260) / h
             img = cv2.resize(img, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
             h, w = img.shape[:2]
-        x = min(max(fx + fw / 2 - w / 2, 30), W - w - 30)
+        x = min(max(fx + fw / 2 - w / 2, SAFE_LEFT), SAFE_RIGHT - w)
         return img, int(x), int(max(bottom - h, SAFE_TOP))
     # "auto": the larger free band above or below the face
     fy0, fy1 = fy - 0.25 * fh, fy + fh * 1.05
@@ -178,7 +180,7 @@ def place_photo(e, img, face, W):
         s = max(bot - top, 380) / h
         img = cv2.resize(img, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
         h, w = img.shape[:2]
-    return img, (W - w) // 2, int((top + bot) / 2 - h / 2)
+    return img, int((SAFE_LEFT + SAFE_RIGHT) / 2 - w / 2), int((top + bot) / 2 - h / 2)
 
 
 def main(inp, fx_path, out):
@@ -269,9 +271,16 @@ def main(inp, fx_path, out):
                         bb = detect_face(frame, ts_ms)
                         eyes = bb[1] + 0.42 * bb[3] if bb else H * 0.36
                         marquee_y[i] = e.get("y", eyes + e.get("size", 104) * 0.35) - base
+                    # scroll across the safe band only (never under the app's buttons), soft-faded edges
                     k = (t - e["start"]) / (e["end"] - e["start"])
-                    x = W - k * (W + layer.shape[1])
-                    frame = blend(frame, layer, x, marquee_y[i])
+                    x = SAFE_RIGHT - k * (SAFE_RIGHT - SAFE_LEFT + layer.shape[1])
+                    band = np.zeros((layer.shape[0], W + 2 * layer.shape[1], 4), np.float32)
+                    off = layer.shape[1]
+                    band[:, off + int(x):off + int(x) + layer.shape[1]] = layer
+                    band = band[:, off:off + W]
+                    ramp = np.clip(np.minimum(np.arange(W) - SAFE_LEFT, SAFE_RIGHT - np.arange(W)) / 40, 0, 1)
+                    band[..., 3] *= ramp[None, :]
+                    frame = blend(frame, band, 0, marquee_y[i])
                 else:
                     age, left = t - e["start"], e["end"] - t
                     anim = e.get("anim", "rise")

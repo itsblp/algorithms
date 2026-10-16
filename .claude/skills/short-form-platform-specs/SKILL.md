@@ -5,6 +5,8 @@ description: Cross-platform specs for content posted to BOTH Instagram (Reels, c
 
 # Short-form platform specs (Instagram + TikTok)
 
+> **Hard rule from the user:** captions and on-screen text must *never* touch the app interface (handle, caption, buttons, search bar) on either platform. A render that fails the safe-zone check is not done. Fix it before showing it to the user.
+
 Every piece of content gets posted to **both** IG and TikTok. The rule is: **design once for the stricter platform in every dimension**, so one master file works on both without re-editing.
 
 Platforms change their UI often. If a number here looks off against what the user sees in-app, trust the app, then update this file.
@@ -22,15 +24,15 @@ Platforms change their UI often. If a number here looks off against what the use
 Keep **all text, faces, and key visuals** inside this box on a 1080×1920 frame:
 
 ```
-x: 60 → 930   (left margin 60px, right margin 150px — engagement buttons on the right)
-y: 220 → 1440 (top 220px — tabs/header; bottom 480px — username, caption, audio ticker)
+x: 80 → 880   (left 80px — tall phones crop ~50px off each side; right 200px — avatar and button column)
+y: 260 → 1400 (top 260px — tabs, or the search bar on search results; bottom 520px — handle, caption, audio, promo/chip rows)
 ```
 
-- The bottom 480px is the most dangerous zone: the caption expands upward on both apps.
-- The right 150px holds like/comment/share/audio buttons on both apps.
+- The bottom 520px is the most dangerous zone: the caption expands upward on both apps, and TikTok adds rows above the handle (promote banner, location or effect chips).
+- The right 200px holds the avatar and the like/comment/save/share buttons. On TikTok the column starts at about x 900.
 - Backgrounds and B-roll can and should fill the full frame. Only *information* has to stay inside the box.
 
-**Every text element counts:** titles, captions, credits and series tags ("@handle · series") all stay inside y 220–1440. TikTok puts the handle at about y 1500–1620 and the caption just below it. Text placed at 77–88% of the frame height lands directly on it. This happened to the user on 2026-10-16.
+**Every text element counts:** titles, captions, credits and series tags ("@handle · series") all stay inside the box above. Measured from the user's own TikTok screenshot (2026-10-16): the handle sits at y ≈ 1540, the button column at x ≥ 900, and the search bar reaches y ≈ 250. TikTok puts the handle at about y 1540–1620 and the caption just below it. Text placed at 77–88% of the frame height lands directly on it. This happened to the user on 2026-10-16.
 
 **QA check (required before export):** `python3 scripts/safe_zone_check.py final.mp4 zones.png` shades the UI zones in cyan on sampled frames. Look at the image. No text and no face may sit in cyan.
 
@@ -50,11 +52,11 @@ The two platforms prefer different ratios:
 ```
 Canvas:            1080×1920 (TikTok export as-is)
 4:5 content band:  y 285 → 1635 (1080×1350; crop this for the IG export)
-Text-safe area:    x 80 → 930, y 330 → 1500
+Text-safe area:    x 80 → 880, y 330 → 1400
 ```
 
 - The 285px above and below the band is background only: a solid fill, gradient, or extended image.
-- The text-safe area keeps text clear of TikTok's right-side buttons and bottom caption, and inside IG's 4:5 crop.
+- The text-safe area keeps text clear of TikTok's right-side buttons and bottom caption (photo mode shows the same interface), and inside IG's 4:5 crop.
 - Export **two files per slide**: `slide-01_tiktok.png` (full 1080×1920) and `slide-01_ig.png` (center crop, 1080×1350).
 - Slide count: aim for **5–10 slides**. That's well under the limits (IG 20, TikTok 35).
 - Format: PNG for text-heavy graphics, high-quality JPG (≥90) for photos. Use sRGB.

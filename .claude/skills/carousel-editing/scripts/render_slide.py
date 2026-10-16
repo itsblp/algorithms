@@ -28,8 +28,8 @@ DEFAULTS = {
     "tracking": -0.055,   # fraction of font size between letters
     "leading": 0.93,      # baseline-to-baseline as fraction of the next line's size
     "x": 80,
-    "max_width": 850,     # text-safe x 80 -> 930
-    "bottom": 1470,
+    "max_width": 800,     # text-safe x 80 -> 880
+    "bottom": 1380,       # last baseline; descenders must stay above y 1400
     "focus_y": 0.4,
     "gradient": 0.3,      # max bottom darkening (0 = none); keeps cream type legible
     "shadow": 0.25,       # soft drop-shadow opacity
