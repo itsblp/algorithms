@@ -23,9 +23,9 @@ W, H = 1080, 1920
 IG_TOP, IG_H = 285, 1350
 DEFAULTS = {
     "out_dir": ".",
-    "font": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts", "NimbusSans-Regular.otf"),
+    "font": "/usr/share/fonts/opentype/inter/InterDisplay-Medium.otf",
     "color": "#FBF4D6",
-    "tracking": -0.06,    # fraction of font size between letters
+    "tracking": -0.055,   # fraction of font size between letters
     "leading": 0.93,      # baseline-to-baseline as fraction of the next line's size
     "x": 80,
     "max_width": 850,     # text-safe x 80 -> 930
@@ -33,7 +33,7 @@ DEFAULTS = {
     "focus_y": 0.4,
     "gradient": 0.3,      # max bottom darkening (0 = none); keeps cream type legible
     "shadow": 0.25,       # soft drop-shadow opacity
-    "weight_boost": 0.012,  # faux-bolder stroke as fraction of font size; turns Nimbus Regular into a Helvetica-Medium look
+    "weight_boost": 0.0,  # faux-bolder stroke as fraction of font size (e.g. 0.012 makes a Regular look Medium)
     "background": "#F4F1EC",
 }
 
