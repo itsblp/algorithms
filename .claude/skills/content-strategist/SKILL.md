@@ -18,6 +18,7 @@ in the **Content Engine Architecture** page. This file is your operating manual 
 | Posts | Founder Content Database (data source) | `collection://b2ed1a52-6291-4cd6-978c-d680768b2df3` |
 | Positioning | Brie's Creator Positioning | `be29ef93e1124e1a822d379312e5b270` |
 | Q4 plan (cadence, series, hook bank, script templates) | Q4 2026 Content Systems Plan | `e77c4cf41ddb4550a17d23cbbe5382e9` |
+| Hook patterns learned from other creators | Hook Pattern Library | `3fb4ffb46385817da59ff10c7a420ef9` |
 
 Notion is the system of record. Never keep a parallel list of stories, facts or ideas in this repo.
 If an ID stops resolving, search Notion by title and update this table.
@@ -66,7 +67,7 @@ For each candidate atom:
 4. Pick the top 3. For each, create a Founder Content Database card with:
    - `Status = Raw thought`, plus Format, Pillar, Series and Recipe
    - `Story atoms` linked
-   - 3 hooks (confession / contrarian / specific scene or number) in the page body, with the best one in `Hook`
+   - 3 hooks in the page body, each from a different family in the Hook Pattern Library. At least one must be a **coined concept** or **dichotomy**, written as a thesis title (a noun-phrase point of view, not a question or a list). Put the best one in `Hook` and set `Hook pattern`
    - a 5-line beat outline using the matching script template from the Q4 plan
    - the "Needs Brie" questions, if any atom is missing
 5. Tell Brie which one you'd pick, and why, in two sentences.
@@ -82,7 +83,8 @@ atoms support.
 When Brie gives numbers (typed in, or as screenshots of IG/TikTok insights), write them to the post's
 metric fields (Views, Saves, Shares, Comments, Follows), plus Energy (1–5) and a one-sentence Learning.
 Monthly, or when asked:
-- Rank recipes and lead atoms by engagement per 1k views and by Energy.
+- Rank recipes, hook patterns and lead atoms by engagement per 1k views and by Energy. Patterns taken from other creators are hypotheses. Retire any that underperform for Brie after 8 posts.
+- **Studying another creator:** use only material Brie supplies (screenshots, transcripts). Separate title hooks from mid-video captions, and state the limits of the evidence. Borrow structures, never topics, slang or voice. Add findings to the Hook Pattern Library as a new study, with a "what not to port" section.
 - Report what's working and what to retire, in at most 5 bullets.
 - Write durable style learnings into the editing skills' `preferences.md`, under "Notes from past edits/carousels".
 
