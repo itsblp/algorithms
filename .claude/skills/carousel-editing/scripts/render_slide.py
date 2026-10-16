@@ -14,6 +14,7 @@ Writes <out_dir>/tiktok/<name>.png (1080x1920) and <out_dir>/ig/<name>.png
   background   hex color used when there is no photo
 """
 import json
+import os
 import sys
 
 from PIL import Image, ImageDraw, ImageFont
@@ -22,9 +23,9 @@ W, H = 1080, 1920
 IG_TOP, IG_H = 285, 1350
 DEFAULTS = {
     "out_dir": ".",
-    "font": "/usr/share/fonts/opentype/inter/InterDisplay-Medium.otf",
+    "font": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts", "NimbusSans-Regular.otf"),
     "color": "#FBF4D6",
-    "tracking": -0.055,   # fraction of font size between letters
+    "tracking": -0.06,    # fraction of font size between letters
     "leading": 0.93,      # baseline-to-baseline as fraction of the next line's size
     "x": 80,
     "max_width": 850,     # text-safe x 80 -> 930
@@ -32,6 +33,7 @@ DEFAULTS = {
     "focus_y": 0.4,
     "gradient": 0.3,      # max bottom darkening (0 = none); keeps cream type legible
     "shadow": 0.25,       # soft drop-shadow opacity
+    "weight_boost": 0.012,  # faux-bolder stroke as fraction of font size; turns Nimbus Regular into a Helvetica-Medium look
     "background": "#F4F1EC",
 }
 
@@ -53,10 +55,10 @@ def line_width(font, text, size, tracking):
     return font.getlength(text) + tracking * size * (len(text) - 1)
 
 
-def draw_tracked(draw, x, y, text, font, size, tracking, fill):
+def draw_tracked(draw, x, y, text, font, size, tracking, fill, stroke=0):
     for i, ch in enumerate(text):
         cx = x + font.getlength(text[:i]) + tracking * size * i
-        draw.text((cx, y), ch, font=font, fill=fill, anchor="ls")
+        draw.text((cx, y), ch, font=font, fill=fill, anchor="ls", stroke_width=stroke, stroke_fill=fill)
 
 
 def render(spec):
@@ -96,17 +98,17 @@ def render(spec):
     shadow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     td, sd = ImageDraw.Draw(text_layer), ImageDraw.Draw(shadow_layer)
     for (text, size, font, _), b in zip(lines, baselines):
-        draw_tracked(td, c["x"], b + offset, text, font, size, c["tracking"], hex_rgb(c["color"]))
+        stroke = round(size * c["weight_boost"])
+        draw_tracked(td, c["x"], b + offset, text, font, size, c["tracking"], hex_rgb(c["color"]), stroke)
         if c["shadow"]:
             draw_tracked(sd, c["x"] + 2, b + offset + 3, text, font, size, c["tracking"],
-                         (0, 0, 0, round(255 * c["shadow"])))
+                         (0, 0, 0, round(255 * c["shadow"])), stroke)
     if c["shadow"]:
         from PIL import ImageFilter
         shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(6))
         base = Image.alpha_composite(base, shadow_layer)
     base = Image.alpha_composite(base, text_layer).convert("RGB")
 
-    import os
     for d in ("tiktok", "ig"):
         os.makedirs(os.path.join(c["out_dir"], d), exist_ok=True)
     base.save(os.path.join(c["out_dir"], "tiktok", f"{c['name']}.png"))

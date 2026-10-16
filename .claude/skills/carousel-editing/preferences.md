@@ -36,9 +36,9 @@ The user's chosen carousel style. Every slide uses it unless the user asks other
 - **CTA slide:** same treatment, with the comment keyword in the huge size.
 
 ```yaml
-font: "Inter Display Medium"  # in the container: /usr/share/fonts/opentype/inter/InterDisplay-Medium.otf
-font_alt: "Helvetica Neue Medium / Neue Haas Grotesk Display Medium"   # closest to the reference; use if the user's tool has it
-tracking: -0.055              # ≈ -55 in Canva/Figma letter-spacing units (-5.5%)
+font: "Nimbus Sans Regular + weight_boost 0.012"   # free Helvetica clone, bundled in ../fonts (AGPL + font exception); chosen by the user 2026-10-16 over Inter after a side-by-side test
+font_fallback: "Inter Display Medium"   # if the bundled file is missing
+tracking: -0.06               # ≈ -60 in Canva/Figma letter-spacing units (-6%)
 line_height: 0.93
 text_color: "#FBF4D6"         # warm cream
 size_scale: {lead: 125, hero: 195, context: 115, note: 72}   # px on the 1080-wide canvas; shrink a line only if it overflows
