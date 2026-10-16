@@ -9,6 +9,8 @@ Before doing anything, load these:
 1. `../short-form-platform-specs/SKILL.md`, section 2 (the carousel canvas). Every slide is designed **1080×1920 with content inside the centered 4:5 band**, so one design exports to both TikTok (9:16) and IG (4:5).
 2. `preferences.md` (this folder) — the user's house style. **Preferences override the defaults in this file.** If the user states a new preference, offer to save it there.
 
+3. If the carousel has a card in the Notion Founder Content Database, build it from the card's linked **Story atoms** and **Recipe** (see `../content-strategist/SKILL.md`). Slide copy may only state facts those Verified atoms support. Use the atoms' "Visual assets" Drive folders for photos.
+
 ## Inputs you might get
 
 | Input | What to do |

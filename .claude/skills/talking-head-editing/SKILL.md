@@ -9,6 +9,8 @@ Before doing anything, load these:
 1. `../short-form-platform-specs/SKILL.md` — sizes, safe zones, export and cross-posting rules. Every output must be valid on **both** IG Reels and TikTok.
 2. `preferences.md` (this folder) — the user's house style. **Preferences override the defaults in this file.** If the user states a new preference during a session, offer to save it to `preferences.md`.
 
+3. If the video has a card in the Notion Founder Content Database, read its linked **Story atoms** (see `../content-strategist/SKILL.md`). Scripts, hooks, captions and on-screen text may only state facts those Verified atoms support. After transcribing, hand the transcript to the content-strategist's **Mine** loop, so new stories become Proposed atoms.
+
 ## Inputs you might get
 
 | Input | What to do |
