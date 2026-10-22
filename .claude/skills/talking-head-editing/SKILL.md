@@ -134,6 +134,26 @@ ffmpeg -i cut.mp4 -vf "ass=captions.ass" -c:v libx264 -profile:v high -pix_fmt y
 
 If the user edits in CapCut / Premiere / DaVinci instead, deliver the cut list as a timecoded table plus the `.srt`, and describe punch-ins as "scale 115% at 00:04.20". Don't push ffmpeg on someone who doesn't want it.
 
+## Two presets: pick one per video
+
+| | **Simple** (default for one-take, do-something-while-talking videos) | **Produced** (story videos with B-roll and effects) |
+|---|---|---|
+| Footage | Selfie camera close-up, one continuous take, ideally doing a real routine (skincare, coffee, getting ready, a walk) | Medium shot, multiple takes, B-roll |
+| Cuts | Only dead air, false starts and filler. Keep it feeling like one take. No punch-ins. | Jump cuts every 1.5–2 s, punch-ins, B-roll weave |
+| Hook | Title at the top for about 1.8 s (`--title`), plus an optional comment-reply bubble when answering a real follower question (`comment_card.py`) | Hook overlay plus the strongest line moved to the front |
+| Captions | `kinetic_captions.py --mode build`: small plain text at the top that builds up word by word | `--mode pop`: bold words popping in mid-frame |
+| Effects | None, apart from the comment bubble | Scrolling quote, photos, punch-ins (`effects.py`) |
+
+Simple-preset pipeline:
+1. Transcribe.
+2. Cut only dead air.
+3. If answering a comment: `comment_card.py "<real comment>" card.png --handle @name`, then `effects.py` with a `sticker` at x 80, y ≈ 1040 for the first ~1.8 s.
+4. `kinetic_captions.py words.json --mode build --title "<hook>" --title-end 1.8 > captions.ass`.
+5. Final export.
+6. Safe-zone check.
+
+The reference reel this preset copies put its captions under the IG header and its comment bubble over the handle. Ours stay inside the safe zone. Never move them out to match a reference.
+
 ## Full pipeline (Claude does the edit)
 
 Work in `content/<video-slug>/` with the raw A-roll and a `broll/` folder.

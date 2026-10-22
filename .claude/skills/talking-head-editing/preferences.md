@@ -88,6 +88,16 @@ punch_in:
   rule: alternate in/out, never two of the same scale in a row
 ```
 
+## Simple preset (from the user's reference reel, 2026-10-22)
+```yaml
+use_for: one-take talking heads while doing something (routine, getting ready, coffee), Q&A replies
+hook_title: 1 short line, top-left, Inter Display SemiBold 84 px, white, ~1.8 s
+comment_reply: when answering a real follower comment; white rounded bubble, black text, ~1.8 s, inside the safe zone (lower-middle, never over the handle)
+captions: build mode — Inter Display Medium 54 px, white, soft shadow, no outline, top of frame (y 280), builds word by word, clears after ~48 characters or a sentence end
+cuts: dead air and filler only; no punch-ins, no B-roll, no music bed unless added in-app
+note: if the top of the frame is bright (white wall), keep the shadow on, and consider framing a darker area at the top
+```
+
 ## Audio
 ```yaml
 master_music: none            # default — add a platform-native sound in each app

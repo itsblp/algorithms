@@ -25,7 +25,8 @@ effects.json (all times in seconds on INPUT's timeline; every list is optional):
     {"start": 12.0, "end": 13.5, "paths": ["photos/team1.jpg", "photos/team2.jpg"]}
       # DEFAULT style "plain": a clean rectangle (no border, tilt, shadow) that cuts in just above
       # the head, centered on the face. "paths" flips through several photos in the same spot.
-      # Optional: width (430), anim (cut | fade | pop), style "card" (white border, tilt, shadow),
+      # Optional: width (430), anim (cut | fade | pop), style "card" (white border, tilt, shadow)
+      # or "sticker" (transparent PNG at its own size, e.g. a comment_card.py bubble; give x, y),
       # placement "above_head" (default) | "auto" (largest free band above/below the face),
       # or x / y (top-left px) to place manually.
   ]
@@ -120,10 +121,11 @@ def render_marquee(e):
 # ---------- photos (rendered once per image) ----------
 
 def render_photo(path, e):
-    img = Image.open(path).convert("RGB")
-    w = e.get("width", 430)
-    img = img.resize((w, round(img.height * w / img.width)), Image.LANCZOS).convert("RGBA")
-    if e.get("style", "plain") == "plain":
+    img = Image.open(path).convert("RGBA")  # keeps transparency (stickers, comment cards)
+    style = e.get("style", "plain")
+    w = e.get("width", img.width if style == "sticker" else 430)
+    img = img.resize((w, round(img.height * w / img.width)), Image.LANCZOS)
+    if style in ("plain", "sticker"):
         return np.array(img)
     b = e.get("border", 14)  # "card" style
     card = Image.new("RGBA", (img.width + 2 * b, img.height + 2 * b), (255, 255, 255, 255))
@@ -157,8 +159,10 @@ def blend(frame, rgba, x, y):
 def place_photo(e, img, face, W):
     """Return (img, top_left_x, top_left_y)."""
     h, w = img.shape[:2]
-    if "x" in e or "y" in e:
-        return img, int(e.get("x", (W - w) // 2)), int(e.get("y", SAFE_TOP))
+    if "x" in e or "y" in e:  # manual placement, still clamped inside the safe zone
+        x = min(max(int(e.get("x", (W - w) // 2)), SAFE_LEFT), max(SAFE_LEFT, SAFE_RIGHT - w))
+        y = min(max(int(e.get("y", SAFE_TOP)), SAFE_TOP), max(SAFE_TOP, SAFE_BOTTOM - h))
+        return img, x, y
     if face is None:
         return img, (W - w) // 2, SAFE_TOP
     fx, fy, fw, fh = face

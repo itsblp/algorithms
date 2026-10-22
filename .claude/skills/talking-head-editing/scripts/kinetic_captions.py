@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Build kinetic (word-by-word, timed-to-speech) ASS captions from words.json.
+"""Build timed-to-speech ASS captions from words.json.
 
-Each chunk of 2-3 words is laid out in full from the start, so the line never
-shifts, but every word stays invisible until it is spoken, then pops in.
+Two modes:
+  pop   (default, "produced" talking heads): chunks of 2-3 bold words laid out in full,
+        each word invisible until spoken, then pops in. Middle of the frame (--baseline).
+  build ("simple" talking heads): small plain text at the TOP of the frame that builds up
+        word by word as it's spoken (up to 2 lines), then clears and starts again.
+        Optional --title shows a hook title at the top first; captions wait until it ends.
 
 Usage: kinetic_captions.py words.json > captions.ass
-       [--font Inter] [--size 72] [--outline 4] [--words 3]
-       [--baseline 1250] [--upper] [--keep-punct]
+       [--mode pop|build] [--font Inter] [--size 72] [--outline 4] [--words 3]
+       [--baseline 1250] [--top 280] [--title "How I avoid burnout" --title-end 1.8]
+       [--upper] [--keep-punct]
 """
 import argparse
 import json
@@ -23,9 +28,19 @@ p.add_argument("--upper", action="store_true")
 p.add_argument("--keep-punct", action="store_true")
 p.add_argument("--pop-ms", type=int, default=90)
 p.add_argument("--gap", type=float, default=0.35, help="silence (s) that forces a new chunk")
+p.add_argument("--mode", choices=["pop", "build"], default="pop")
+p.add_argument("--top", type=int, default=280, help="build mode: top edge of the caption block (y)")
+p.add_argument("--chars", type=int, default=48, help="build mode: max characters before the block clears")
+p.add_argument("--title", default="", help="hook title shown at the top before captions start")
+p.add_argument("--title-end", type=float, default=1.8)
 a = p.parse_args()
+if a.mode == "build":
+    a.size = 54 if a.size == 72 else a.size
+    a.font = "Inter Display Medium" if a.font == "Inter" else a.font
 if not 1000 <= a.baseline <= 1300:
     p.error("--baseline must be 1000-1300 so captions stay clear of the TikTok/IG interface (safe zone ends at y 1400)")
+if not 270 <= a.top <= 420:
+    p.error("--top must be 270-420: above that the IG header / TikTok tabs and search bar cover it")
 
 words = json.load(open(a.words))
 
@@ -39,6 +54,36 @@ def clean(w):
 def ts(t):
     t = max(t, 0)
     return f"{int(t // 3600)}:{int(t % 3600 // 60):02d}:{t % 60:05.2f}"
+
+
+def build_mode():
+    """Pages of up to --chars characters; each word adds itself to the visible text."""
+    pages, cur, n = [], [], 0
+    for w in words:
+        t = clean(w["word"])
+        if not t:
+            continue
+        if cur and (n + len(t) + 1 > a.chars or w["start"] - cur[-1]["end"] > 0.8
+                    or re.search(r"[.?!]$", cur[-1]["word"])):
+            pages.append(cur)
+            cur, n = [], 0
+        cur.append(w)
+        n += len(t) + 1
+    if cur:
+        pages.append(cur)
+    out = []
+    for i, pg in enumerate(pages):
+        page_end = pg[-1]["end"] + 0.3
+        if i + 1 < len(pages):
+            page_end = min(page_end, pages[i + 1][0]["start"])
+        for k, w in enumerate(pg):
+            start = max(w["start"], a.title_end if a.title else 0)
+            end = pg[k + 1]["start"] if k + 1 < len(pg) else page_end
+            if end - start < 0.04:
+                continue
+            text = " ".join(clean(x["word"]) for x in pg[:k + 1])
+            out.append(f"Dialogue: 0,{ts(start)},{ts(end)},Build,,0,0,0,,{text}")
+    return out
 
 
 chunks, cur = [], []
@@ -61,9 +106,17 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Caption,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,{a.outline},0,2,200,200,{1920 - a.baseline},1
+Style: Build,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,0,0,0,0,100,100,0,0,1,0,2,8,200,200,{a.top},1
+Style: Title,Inter Display SemiBold,84,&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,0,0,0,0,100,100,-1,0,1,0,3,7,80,200,{a.top},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text""")
+
+if a.title:
+    print(f"Dialogue: 1,{ts(0)},{ts(a.title_end)},Title,,0,0,0,,{a.title}")
+if a.mode == "build":
+    print("\n".join(build_mode()))
+    raise SystemExit
 
 for i, c in enumerate(chunks):
     start = c[0]["start"]
