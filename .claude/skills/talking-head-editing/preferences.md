@@ -98,16 +98,6 @@ cuts: dead air and filler only; no punch-ins, no B-roll, no music bed unless add
 note: if the top of the frame is bright (white wall), keep the shadow on, and consider framing a darker area at the top
 ```
 
-## Diary Voiceover style settings (from the user's reference reel, 2026-10-22; see styles/diary-voiceover.md)
-```yaml
-length: 25–45 s of narration
-clip_change: every 1.5–3 s, on phrase boundaries
-hook: opening words one at a time, Inter Display Bold 128 px, top (y 280), ~1.9 s
-captions: bold Inter Display 84 px, white, soft shadow, middle (baseline y 1000), 1–3 words building
-clip_audio: muted, or −24 dB under the narration
-vulnerable_footage: needs explicit approval (crying, health, other people)
-```
-
 ## Audio
 ```yaml
 master_music: none            # default — add a platform-native sound in each app

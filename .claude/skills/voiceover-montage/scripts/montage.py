@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble a Diary Voiceover montage: one voice track over a sequence of candid clips.
+"""Assemble a voiceover montage: one voice track over a sequence of candid clips.
 
 Usage: montage.py plan.json out.mp4
 

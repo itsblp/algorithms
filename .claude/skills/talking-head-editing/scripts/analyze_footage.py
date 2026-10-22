@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Look at the footage and recommend a talking-head style (see ../styles/).
+"""Look at the footage and recommend a talking-head style (see ../styles/), or hand off to the
+separate voiceover-montage format when the footage is narration + many short clips.
 
 Usage: analyze_footage.py FILE_OR_DIR [...]   (prints a JSON report + a recommendation)
 
@@ -81,7 +82,7 @@ def recommend(videos, audio_files):
     short = [v for v in videos if v["duration_s"] < 8]
     reasons = []
     if audio_files or (len(videos) >= 4 and len(short) >= len(videos) * 0.6):
-        style = "diary-voiceover"
+        style = "voiceover-montage (separate format: use the voiceover-montage skill)"
         reasons.append("a voiceover file and/or many short candid clips" if audio_files else "many short candid clips")
     elif len(talk) == 1 and talk[0]["framing"] == "selfie close-up" and len(videos) - len(talk) <= 1:
         style = "quiet-take"

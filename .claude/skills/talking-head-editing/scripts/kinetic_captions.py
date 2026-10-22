@@ -4,12 +4,12 @@
 Two modes:
   pop   (default, "produced" talking heads): chunks of 2-3 bold words laid out in full,
         each word invisible until spoken, then pops in. Middle of the frame (--baseline).
-  build (Quiet Take / Diary Voiceover): text that builds up word by word as it's spoken,
-        then clears. --anchor top (Quiet Take: small, plain) or middle (Diary Voiceover:
+  build (Quiet Take; also used by the separate voiceover-montage skill): text that builds up word by word as it's spoken,
+        then clears. --anchor top (Quiet Take: small, plain) or middle (voiceover montage:
         bold Inter Display 84 px, 1-3 words at a time; pass --chars 20).
         Optional --title shows a hook title at the top first; captions wait until it ends.
         Optional --hook-big SEC: words spoken before SEC appear one at a time, huge, at the
-        top (the Diary Voiceover cold open); normal captions take over after.
+        top (the voiceover-montage cold open); normal captions take over after.
 
 Usage: kinetic_captions.py words.json > captions.ass
        [--mode pop|build] [--font Inter] [--size 72] [--outline 4] [--words 3]
