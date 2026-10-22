@@ -88,7 +88,7 @@ punch_in:
   rule: alternate in/out, never two of the same scale in a row
 ```
 
-## Simple preset (from the user's reference reel, 2026-10-22)
+## Quiet Take style settings (from the user's reference reel, 2026-10-22; see styles/quiet-take.md)
 ```yaml
 use_for: one-take talking heads while doing something (routine, getting ready, coffee), Q&A replies
 hook_title: 1 short line, top-left, Inter Display SemiBold 84 px, white, ~1.8 s
@@ -96,6 +96,16 @@ comment_reply: when answering a real follower comment; white rounded bubble, bla
 captions: build mode — Inter Display Medium 54 px, white, soft shadow, no outline, top of frame (y 280), builds word by word, clears after ~48 characters or a sentence end
 cuts: dead air and filler only; no punch-ins, no B-roll, no music bed unless added in-app
 note: if the top of the frame is bright (white wall), keep the shadow on, and consider framing a darker area at the top
+```
+
+## Diary Voiceover style settings (from the user's reference reel, 2026-10-22; see styles/diary-voiceover.md)
+```yaml
+length: 25–45 s of narration
+clip_change: every 1.5–3 s, on phrase boundaries
+hook: opening words one at a time, Inter Display Bold 128 px, top (y 280), ~1.9 s
+captions: bold Inter Display 84 px, white, soft shadow, middle (baseline y 1000), 1–3 words building
+clip_audio: muted, or −24 dB under the narration
+vulnerable_footage: needs explicit approval (crying, health, other people)
 ```
 
 ## Audio

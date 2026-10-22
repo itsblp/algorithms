@@ -4,9 +4,12 @@
 Two modes:
   pop   (default, "produced" talking heads): chunks of 2-3 bold words laid out in full,
         each word invisible until spoken, then pops in. Middle of the frame (--baseline).
-  build ("simple" talking heads): small plain text at the TOP of the frame that builds up
-        word by word as it's spoken (up to 2 lines), then clears and starts again.
+  build (Quiet Take / Diary Voiceover): text that builds up word by word as it's spoken,
+        then clears. --anchor top (Quiet Take: small, plain) or middle (Diary Voiceover:
+        bold Inter Display 84 px, 1-3 words at a time; pass --chars 20).
         Optional --title shows a hook title at the top first; captions wait until it ends.
+        Optional --hook-big SEC: words spoken before SEC appear one at a time, huge, at the
+        top (the Diary Voiceover cold open); normal captions take over after.
 
 Usage: kinetic_captions.py words.json > captions.ass
        [--mode pop|build] [--font Inter] [--size 72] [--outline 4] [--words 3]
@@ -33,12 +36,20 @@ p.add_argument("--top", type=int, default=280, help="build mode: top edge of the
 p.add_argument("--chars", type=int, default=48, help="build mode: max characters before the block clears")
 p.add_argument("--title", default="", help="hook title shown at the top before captions start")
 p.add_argument("--title-end", type=float, default=1.8)
+p.add_argument("--anchor", choices=["top", "middle"], default="top", help="build mode position")
+p.add_argument("--mid-y", type=int, default=1000, help="build mode, middle anchor: baseline y")
+p.add_argument("--hook-big", type=float, default=0.0, help="seconds of one-big-word-at-a-time opener")
 a = p.parse_args()
-if a.mode == "build":
+if a.mode == "build" and a.anchor == "top":
     a.size = 54 if a.size == 72 else a.size
     a.font = "Inter Display Medium" if a.font == "Inter" else a.font
+elif a.mode == "build":  # middle anchor: bold diary captions
+    a.size = 84 if a.size == 72 else a.size
+    a.font = "Inter Display" if a.font == "Inter" else a.font
 if not 1000 <= a.baseline <= 1300:
     p.error("--baseline must be 1000-1300 so captions stay clear of the TikTok/IG interface (safe zone ends at y 1400)")
+if not 1000 <= a.mid_y <= 1300 and a.anchor == "middle":
+    p.error("--mid-y must be 1000-1300 (safe zone)")
 if not 270 <= a.top <= 420:
     p.error("--top must be 270-420: above that the IG header / TikTok tabs and search bar cover it")
 
@@ -77,12 +88,16 @@ def build_mode():
         if i + 1 < len(pages):
             page_end = min(page_end, pages[i + 1][0]["start"])
         for k, w in enumerate(pg):
-            start = max(w["start"], a.title_end if a.title else 0)
+            start = max(w["start"], a.title_end if a.title else 0, a.hook_big)
             end = pg[k + 1]["start"] if k + 1 < len(pg) else page_end
             if end - start < 0.04:
                 continue
             text = " ".join(clean(x["word"]) for x in pg[:k + 1])
             out.append(f"Dialogue: 0,{ts(start)},{ts(end)},Build,,0,0,0,,{text}")
+    hook = [w for w in words if w["start"] < a.hook_big and clean(w["word"])]
+    for k, w in enumerate(hook):
+        end = hook[k + 1]["start"] if k + 1 < len(hook) else a.hook_big
+        out.append(f"Dialogue: 1,{ts(w['start'])},{ts(end)},Big,,0,0,0,,{clean(w['word'])}")
     return out
 
 
@@ -106,7 +121,8 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Caption,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,{a.outline},0,2,200,200,{1920 - a.baseline},1
-Style: Build,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,0,0,0,0,100,100,0,0,1,0,2,8,200,200,{a.top},1
+Style: Build,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,{-1 if a.anchor == "middle" else 0},0,0,0,100,100,0,0,1,0,2,{8 if a.anchor == "top" else 2},200,200,{a.top if a.anchor == "top" else 1920 - a.mid_y},1
+Style: Big,Inter Display,128,&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,-1,0,0,0,100,100,-2,0,1,0,3,8,80,200,{a.top},1
 Style: Title,Inter Display SemiBold,84,&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,0,0,0,0,100,100,-1,0,1,0,3,7,80,200,{a.top},1
 
 [Events]

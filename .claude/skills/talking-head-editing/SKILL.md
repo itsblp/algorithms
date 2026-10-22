@@ -1,6 +1,6 @@
 ---
 name: talking-head-editing
-description: Edit talking-head (person-speaking-to-camera) short-form videos for Instagram Reels and TikTok in the user's house style. Use when the user shares a talking-head clip, transcript, or script, or asks to cut, tighten, caption, add B-roll or zooms to, plan, review, or export a talking-head/face-cam/vlog-style video, Reel, or TikTok. Produces a hook rewrite, cut list, burned-in caption file, zoom/B-roll plan, ffmpeg commands, and post copy.
+description: Edit talking-head (person-speaking-to-camera) short-form videos for Instagram Reels and TikTok in the user's house style, automatically choosing a style (Quiet Take, Diary Voiceover, Story Cut) from the footage. Use when the user shares a talking-head clip, transcript, or script, or asks to cut, tighten, caption, add B-roll or zooms to, plan, review, or export a talking-head/face-cam/vlog-style video, voiceover diary, Reel, or TikTok. Produces a hook rewrite, cut list, burned-in caption file, zoom/B-roll plan, ffmpeg commands, and post copy.
 ---
 
 # Talking-head video editing
@@ -10,6 +10,20 @@ Before doing anything, load these:
 2. `preferences.md` (this folder) — the user's house style. **Preferences override the defaults in this file.** If the user states a new preference during a session, offer to save it to `preferences.md`.
 
 3. If the video has a card in the Notion Founder Content Database, read its linked **Story atoms** (see `../content-strategist/SKILL.md`). Scripts, hooks, captions and on-screen text may only state facts those Verified atoms support. After transcribing, hand the transcript to the content-strategist's **Mine** loop, so new stories become Proposed atoms.
+
+## Step 0 — Choose the style (always, before editing)
+
+There are three named styles in `styles/`: **Quiet Take**, **Diary Voiceover** and **Story Cut**. The user doesn't have to pick one. Claude chooses from the footage:
+
+1. Run `python3 scripts/analyze_footage.py <files or folder>`. It reports the framing (selfie close-up / medium / no face), speech, clip lengths, voiceover files, camera motion, caption-band brightness and low-res warnings, plus a recommended style.
+2. Sanity-check the recommendation against the content and the Notion card:
+   - An answer to a follower question or a reflective routine → Quiet Take.
+   - An emotional or episodic story told over many clips → Diary Voiceover.
+   - A story with named people or places or quotes → Story Cut.
+3. Tell the user the choice in **one line** with the reason (e.g. "Quiet Take: one selfie take while you do skincare, so a calm top-caption edit"). Then proceed without waiting. If the user names a style, use it.
+4. Follow that style's file for hook, cuts, captions and effects. Everything else in this file (safe zones, audio, QA, export, post copy) applies to all styles.
+
+If the footage fits no style well (e.g. a dark, low-res clip), say what's missing and what would fix it (more light, the camera original, a voice note) instead of forcing a style.
 
 ## Inputs you might get
 
@@ -133,26 +147,6 @@ ffmpeg -i cut.mp4 -vf "ass=captions.ass" -c:v libx264 -profile:v high -pix_fmt y
 ```
 
 If the user edits in CapCut / Premiere / DaVinci instead, deliver the cut list as a timecoded table plus the `.srt`, and describe punch-ins as "scale 115% at 00:04.20". Don't push ffmpeg on someone who doesn't want it.
-
-## Two presets: pick one per video
-
-| | **Simple** (default for one-take, do-something-while-talking videos) | **Produced** (story videos with B-roll and effects) |
-|---|---|---|
-| Footage | Selfie camera close-up, one continuous take, ideally doing a real routine (skincare, coffee, getting ready, a walk) | Medium shot, multiple takes, B-roll |
-| Cuts | Only dead air, false starts and filler. Keep it feeling like one take. No punch-ins. | Jump cuts every 1.5–2 s, punch-ins, B-roll weave |
-| Hook | Title at the top for about 1.8 s (`--title`), plus an optional comment-reply bubble when answering a real follower question (`comment_card.py`) | Hook overlay plus the strongest line moved to the front |
-| Captions | `kinetic_captions.py --mode build`: small plain text at the top that builds up word by word | `--mode pop`: bold words popping in mid-frame |
-| Effects | None, apart from the comment bubble | Scrolling quote, photos, punch-ins (`effects.py`) |
-
-Simple-preset pipeline:
-1. Transcribe.
-2. Cut only dead air.
-3. If answering a comment: `comment_card.py "<real comment>" card.png --handle @name`, then `effects.py` with a `sticker` at x 80, y ≈ 1040 for the first ~1.8 s.
-4. `kinetic_captions.py words.json --mode build --title "<hook>" --title-end 1.8 > captions.ass`.
-5. Final export.
-6. Safe-zone check.
-
-The reference reel this preset copies put its captions under the IG header and its comment bubble over the handle. Ours stay inside the safe zone. Never move them out to match a reference.
 
 ## Full pipeline (Claude does the edit)
 
