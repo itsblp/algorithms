@@ -26,7 +26,7 @@ Shared tools live in `../talking-head-editing/scripts/` (`transcribe.py`, `kinet
 2. **Clip plan:** one clip per phrase, changing every 1.5–3 s at phrase boundaries. Match each clip to what's being said, literally first (eczema → close-up of skin), otherwise emotionally. The most vulnerable clip goes on the turn of the story, not at the start.
 3. **Assemble:** `scripts/montage.py plan.json montage.mp4`. Clips are center-cropped to 9:16, with clip sound muted or at −24 dB under the voice.
 4. **Hook:** the first 1.5–2 s show the opening words **one at a time, huge, at the top** (`--hook-big 1.9`).
-5. **Captions:** `../talking-head-editing/scripts/kinetic_captions.py --mode build --anchor middle --chars 20 --hook-big 1.9`. Bold white, 1–3 words building in the middle of the frame.
+5. **Captions:** `../talking-head-editing/scripts/kinetic_captions.py --mode build --anchor middle --chars 20 --hook-big 1.9`. Bold white, 1–3 words building in the middle of the frame, plus the signature accent word (Instrument Serif italic, butter yellow; mark it with `"accent": true`, burn with `fontsdir=../short-form-platform-specs/fonts`).
 6. **Series label:** put "Founder Diaries Ch. N"-style naming in the post caption, not on screen. If it's on screen, it goes at the top, never near the handle.
 7. **Effects:** none, apart from hard cuts. No punch-ins (the clips change constantly anyway).
 

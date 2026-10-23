@@ -59,6 +59,18 @@ emoji_in_captions: false
 punctuation_in_captions: false    # default — drop commas/periods; keep ? and !
 ```
 
+## Signature look (2026-10-23): what makes the user's talking heads recognizable in feed
+```yaml
+caption_font: Inter Display (Bold in Story Cut pop captions, Medium in Quiet Take top captions)
+accent_font: "Instrument Serif" italic   # bundled: ../short-form-platform-specs/fonts (OFL, free commercial)
+accent_color: "#F5D547"                   # butter yellow; also the scrolling-quote color
+accent_scale: 128%                        # serif reads lighter, so it's set larger
+accent_rule: 1 word per caption line at most, about one every 3–5 s. Pick the word carrying the meaning or emotion (a number, a named thing, the turn word). Never filler, never two in a row. Rare is what makes it a signature.
+applies_to: Quiet Take, Story Cut, and voiceover-montage captions; hook titles may use one accent word too
+status: default chosen by Claude from the comparison board; the user can swap the font (board options 3–6) or color (butter / chartreuse / cream)
+```
+Mark accent words in `words.json` with `"accent": true` before running `kinetic_captions.py`. Burn with `ass=captions.ass:fontsdir=../short-form-platform-specs/fonts`.
+
 ## Hook overlay
 ```yaml
 hook_overlay: true            # default

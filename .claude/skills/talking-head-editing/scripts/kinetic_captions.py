@@ -11,6 +11,10 @@ Two modes:
         Optional --hook-big SEC: words spoken before SEC appear one at a time, huge, at the
         top (the voiceover-montage cold open); normal captions take over after.
 
+Signature accent: mark 1 key word per caption line (about one every 3-5 s) with "accent": true
+in words.json. It renders in the accent font (Instrument Serif Italic) and color (#F5D547).
+Burn with: ffmpeg ... -vf "ass=captions.ass:fontsdir=../../short-form-platform-specs/fonts"
+
 Usage: kinetic_captions.py words.json > captions.ass
        [--mode pop|build] [--font Inter] [--size 72] [--outline 4] [--words 3]
        [--baseline 1250] [--top 280] [--title "How I avoid burnout" --title-end 1.8]
@@ -39,6 +43,9 @@ p.add_argument("--title-end", type=float, default=1.8)
 p.add_argument("--anchor", choices=["top", "middle"], default="top", help="build mode position")
 p.add_argument("--mid-y", type=int, default=1000, help="build mode, middle anchor: baseline y")
 p.add_argument("--hook-big", type=float, default=0.0, help="seconds of one-big-word-at-a-time opener")
+p.add_argument("--accent-color", default="#F5D547", help="signature accent color for words marked \"accent\": true")
+p.add_argument("--accent-font", default="Instrument Serif", help="signature accent font (italic)")
+p.add_argument("--accent-scale", type=int, default=128, help="accent word size, %% of caption size")
 a = p.parse_args()
 if a.mode == "build" and a.anchor == "top":
     a.size = 54 if a.size == 72 else a.size
@@ -60,6 +67,20 @@ def clean(w):
     if not a.keep_punct:
         w = re.sub(r"[^\w'’?!%$&-]", "", w)
     return w.upper() if a.upper else w
+
+
+def bgr(hexcolor):
+    h = hexcolor.lstrip("#")
+    return f"&H00{h[4:6]}{h[2:4]}{h[0:2]}&"
+
+
+
+def accent(text, w):
+    """Signature look: words marked "accent": true in words.json render in the accent font + color."""
+    if not w.get("accent"):
+        return text
+    return (f"{{\\fn{a.accent_font}\\i1\\fscx{a.accent_scale}\\fscy{a.accent_scale}"
+            f"\\c{bgr(a.accent_color)}}}{text}{{\\r}}")
 
 
 def ts(t):
@@ -92,7 +113,7 @@ def build_mode():
             end = pg[k + 1]["start"] if k + 1 < len(pg) else page_end
             if end - start < 0.04:
                 continue
-            text = " ".join(clean(x["word"]) for x in pg[:k + 1])
+            text = " ".join(accent(clean(x["word"]), x) for x in pg[:k + 1])
             out.append(f"Dialogue: 0,{ts(start)},{ts(end)},Build,,0,0,0,,{text}")
     hook = [w for w in words if w["start"] < a.hook_big and clean(w["word"])]
     for k, w in enumerate(hook):
@@ -146,9 +167,11 @@ for i, c in enumerate(chunks):
         if not text:
             continue
         t0 = int((w["start"] - start) * 1000)
+        full = a.accent_scale if w.get("accent") else 100
+        look = f"\\fn{a.accent_font}\\i1\\b0\\c{bgr(a.accent_color)}" if w.get("accent") else ""
         parts.append(
-            f"{{\\alpha&HFF&\\fscx88\\fscy88\\t({t0},{t0 + 1},\\alpha&H00&)"
-            f"\\t({t0},{t0 + a.pop_ms},\\fscx100\\fscy100)}}{text}"
+            f"{{{look}\\alpha&HFF&\\fscx{int(full * .88)}\\fscy{int(full * .88)}\\t({t0},{t0 + 1},\\alpha&H00&)"
+            f"\\t({t0},{t0 + a.pop_ms},\\fscx{full}\\fscy{full})}}{text}{{\\r}}"
         )
     if parts:
         print(f"Dialogue: 0,{ts(start)},{ts(end)},Caption,,0,0,0,,{' '.join(parts)}")

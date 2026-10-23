@@ -95,6 +95,8 @@ Dialogue: 0,0:00:00.00,0:00:00.80,Caption,,0,0,0,,THIS IS {\c&H0000E5FF&}HOW{\c&
 ```
 (ASS colors are `&HAABBGGRR`, so the hex `#FFE500` becomes `&H0000E5FF`. Margins of 200 on both sides keep captions centered and clear of TikTok's button column, which starts at about x 900, and of the side crop on tall phones.)
 
+**Signature accent (every style):** before generating captions, mark the key words in `words.json` with `"accent": true` (see "Signature look" in `preferences.md`). Then burn with `ass=captions.ass:fontsdir=../short-form-platform-specs/fonts`, or the accent font silently falls back to a default.
+
 ### 6. Audio
 - Light cleanup: high-pass at ~80 Hz, gentle de-ess, and noise reduction only if there's audible hiss (`afftdn` lightly; heavy settings sound robotic).
 - Normalize to −14 LUFS / −1 dBTP (see the specs skill).
