@@ -45,11 +45,20 @@ text_align: left
 text_block_bottom_y: 1380     # on the 1080×1920 master (≈ y 1095 in the 4:5 IG crop); TikTok photo mode shows the handle below this
 bottom_shade: 0.3             # bottom gradient opacity
 text_shadow: 0.25             # soft, blurred, barely visible
-accent: none
+accent: signature             # one *word* per slide: Instrument Serif Italic, #F5D547 (highlighter swipe on light backgrounds). Shared with talking heads and montages.
 fallback_background: "#F4F1EC"   # only when there's no photo
 ```
 
 **Photo requirements:** vertical originals (9:16 or taller) so the TikTok version isn't over-cropped. The subject's face goes in the upper half (y 300–900 on the master), leaving the lower half for type.
+
+## Styles (2026-10-23; see styles/)
+```yaml
+default_choice: automatic (analyze_photos.py + content), announced in one line
+photo_stack: the "Look" section above
+thesis: {light: "#F4F1EC bg / #111111 ink", dark: "#111111 bg / #F4F1EC text", font: Inter Display SemiBold, rhythm: dark cover → light body → dark payoff → light CTA}
+notes: {paper: "#F4F1EC", title: Inter Display SemiBold, list: user handwriting PNGs or Caveat Bold, circle: one key item}
+photos: camera originals ≥ 1000 px (frames from videos and app downloads are too low-res)
+```
 
 ## CTA
 ```yaml

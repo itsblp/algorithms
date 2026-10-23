@@ -1,6 +1,6 @@
 ---
 name: carousel-editing
-description: Plan, write, design and review swipeable carousel posts (Instagram carousels and TikTok photo mode) in the user's house style. Use when the user wants to turn an idea, script, thread, blog post, or video into slides, or asks to write, edit, tighten, lay out, design, review or export a carousel, slideshow, slide post, or photo-mode post. Produces slide-by-slide copy, a layout spec, dual-ratio export guidance, and post copy that works on both platforms.
+description: Plan, write, design and review swipeable carousel posts (Instagram carousels and TikTok photo mode) in the user's house style, automatically choosing a style (Photo Stack, Thesis, Notes) from the photos and content. Use when the user wants to turn an idea, script, thread, blog post, or video into slides, or asks to write, edit, tighten, lay out, design, review or export a carousel, slideshow, slide post, or photo-mode post. Produces slide-by-slide copy, a layout spec, dual-ratio export guidance, and post copy that works on both platforms.
 ---
 
 # Carousel editing
@@ -10,6 +10,19 @@ Before doing anything, load these:
 2. `preferences.md` (this folder) — the user's house style. **Preferences override the defaults in this file.** If the user states a new preference, offer to save it there.
 
 3. If the carousel has a card in the Notion Founder Content Database, build it from the card's linked **Story atoms** and **Recipe** (see `../content-strategist/SKILL.md`). Slide copy may only state facts those Verified atoms support. Use the atoms' "Visual assets" Drive folders for photos.
+
+## Step 0: choose the style (always)
+
+There are three named styles in `styles/`: **Photo Stack**, **Thesis** and **Notes**. Claude picks one, and the user doesn't have to:
+1. If there are photos, run `python3 scripts/analyze_photos.py <photos or folder>`. It checks resolution, orientation, face position, and whether the lower text zone is calm and dark enough for cream type.
+2. Then the content decides:
+   - A list, steps or a framework → **Notes**.
+   - One sharp idea (a coined concept, dichotomy or contrarian claim) → **Thesis**.
+   - A story, a money/access number or a taste reveal with 4+ strong photos → **Photo Stack**.
+   - Only 1–3 strong photos → use the best one as a Photo Stack cover, with the rest in Thesis or Notes.
+3. Tell the user the choice in one line with the reason, then proceed. If the user names a style, use it.
+
+**Signature accent (all styles):** wrap exactly one word or short phrase per slide in `*asterisks*`. It renders in Instrument Serif Italic and butter yellow, the same accent as the user's talking heads and montages.
 
 ## Inputs you might get
 
