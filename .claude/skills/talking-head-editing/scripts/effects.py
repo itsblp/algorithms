@@ -32,7 +32,21 @@ effects.json (all times in seconds on INPUT's timeline; every list is optional):
   ]
 }
 
-Order per frame: punch-in -> text behind person -> photo overlays. Burn captions AFTER this
+  "callouts": [
+    {"start": 2.0, "end": 4.6, "lines": [{"text": "you're literally", "at": 2.0},
+                                         {"text": "tanking your", "at": 2.5},
+                                         {"text": "own views", "at": 3.0}]}
+      # captions as LAYOUT: a 2-3 line stack that hugs the head on the side with more room
+      # (inside the safe zone), lines appearing as spoken. The last line is the signature
+      # accent (serif italic, accent color, underlined). Optional: size (92), accent_last
+      # (true), underline (true), side ("auto" | "left" | "right"). Leave those words OUT
+      # of the regular captions so they don't double up.
+  ]
+
+Reaction images: a "photos" entry with "placement": "reaction" -> small (320 px) image
+pops in at the lower-left of the safe zone for ~1 s on a punchline.
+
+Order per frame: punch-in -> text behind person -> callouts -> photo overlays. Burn captions AFTER this
 script, and leave caption gaps where a marquee runs (the reference style hides captions then).
 Audio is copied from INPUT unchanged.
 """
@@ -50,6 +64,9 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODELS = os.path.join(HERE, "..", "models")
 FONT_DIR = "/usr/share/fonts/opentype/inter"
+BRAND_FONTS = os.path.join(HERE, "..", "..", "short-form-platform-specs", "fonts")
+ACCENT_FONT = os.path.join(BRAND_FONTS, "InstrumentSerif-Italic.ttf")
+ACCENT_COLOR = "#F5D547"
 BLOCK_FONT = os.path.join(FONT_DIR, "InterDisplay-SemiBold.otf")
 MARQUEE_FONT = os.path.join(FONT_DIR, "InterDisplay-Bold.otf")
 SAFE_TOP, SAFE_BOTTOM = 260, 1400  # combined IG/TikTok safe zone on 1080x1920
@@ -123,7 +140,8 @@ def render_marquee(e):
 def render_photo(path, e):
     img = Image.open(path).convert("RGBA")  # keeps transparency (stickers, comment cards)
     style = e.get("style", "plain")
-    w = e.get("width", img.width if style == "sticker" else 430)
+    default_w = img.width if style == "sticker" else (320 if e.get("placement") == "reaction" else 430)
+    w = e.get("width", default_w)
     img = img.resize((w, round(img.height * w / img.width)), Image.LANCZOS)
     if style in ("plain", "sticker"):
         return np.array(img)
@@ -137,6 +155,68 @@ def render_photo(path, e):
     out = Image.alpha_composite(out, shadow.filter(ImageFilter.GaussianBlur(14)))
     out.alpha_composite(card, (pad, pad))
     return np.array(out.rotate(e.get("rotate", -3), resample=Image.BICUBIC, expand=True))
+
+
+def render_callout_lines(e):
+    """Each line as its own RGBA image; the last one in the signature accent (underlined)."""
+    size = e.get("size", 92)
+    out = []
+    for k, ln in enumerate(e["lines"]):
+        is_acc = e.get("accent_last", True) and k == len(e["lines"]) - 1
+        font = ImageFont.truetype(ACCENT_FONT if is_acc else MARQUEE_FONT, int(size * (1.28 if is_acc else 1)))
+        color = hex_rgb(e.get("accent_color", ACCENT_COLOR) if is_acc else "#FFFFFF") + (255,)
+        tr = 0 if is_acc else -0.045 * size
+        text = ln["text"]
+        wpx = int(sum(font.getlength(c) for c in text) + tr * (len(text) - 1)) + 24
+        hpx = int(font.size * 1.25) + 24
+        img = Image.new("RGBA", (wpx, hpx), (0, 0, 0, 0))
+        sh = Image.new("RGBA", (wpx, hpx), (0, 0, 0, 0))
+        base = 12 + int(font.size * 0.95)
+        x = 12
+        for c in text:
+            ImageDraw.Draw(sh).text((x + 2, base + 4), c, font=font, fill=(0, 0, 0, 140), anchor="ls")
+            ImageDraw.Draw(img).text((x, base), c, font=font, fill=color, anchor="ls")
+            x += font.getlength(c) + tr
+        if is_acc and e.get("underline", True):
+            ImageDraw.Draw(img).line([(12, base + 10), (int(x), base + 10)], fill=color, width=max(3, size // 24))
+        img = Image.alpha_composite(sh.filter(ImageFilter.GaussianBlur(5)), img)
+        out.append(np.array(img))
+    return out
+
+
+def place_callout(e, lines, face, W):
+    """Hug the head on the roomier side; shrink to fit; stay inside the safe zone."""
+    bw, bh = max(l.shape[1] for l in lines), sum(int(l.shape[0] * 0.78) for l in lines)
+    side = e.get("side", "auto")
+    if face is None:
+        fx, fy, fw, fh = W * 0.35, 600, W * 0.3, 300
+    else:
+        fx, fy, fw, fh = face
+    right_room = SAFE_RIGHT - (fx + fw * 0.72)   # may overlap the outer hair, never the eyes
+    left_room = (fx + fw * 0.28) - SAFE_LEFT
+    if side == "auto":
+        side = "right" if right_room >= left_room else "left"
+    room = right_room if side == "right" else left_room
+    s = min(1.0, room / bw)
+    above = s < 0.72                              # too tight beside the head: stack above it instead
+    if above:
+        s = min(1.0, (SAFE_RIGHT - SAFE_LEFT) / bw)
+    if s < 1.0:
+        lines = [cv2.resize(l, None, fx=s, fy=s, interpolation=cv2.INTER_AREA) for l in lines]
+        bw, bh = int(bw * s), int(bh * s)
+    if above:
+        top = int(max(SAFE_TOP, fy - 0.45 * fh - bh + 0.25 * fh))  # may overlap the hairline slightly
+    else:
+        top = int(min(max(fy - 0.45 * fh, SAFE_TOP), SAFE_BOTTOM - bh))
+    pos, y = [], top
+    for l in lines:
+        if above:
+            x = (SAFE_LEFT + SAFE_RIGHT - l.shape[1]) // 2
+        else:
+            x = SAFE_RIGHT - l.shape[1] if side == "right" else SAFE_LEFT
+        pos.append((l, x, y))
+        y += int(l.shape[0] * 0.78)
+    return pos
 
 
 def blend(frame, rgba, x, y):
@@ -163,6 +243,8 @@ def place_photo(e, img, face, W):
         x = min(max(int(e.get("x", (W - w) // 2)), SAFE_LEFT), max(SAFE_LEFT, SAFE_RIGHT - w))
         y = min(max(int(e.get("y", SAFE_TOP)), SAFE_TOP), max(SAFE_TOP, SAFE_BOTTOM - h))
         return img, x, y
+    if e.get("placement") == "reaction":  # small punchline image, lower-left of the safe zone
+        return img, SAFE_LEFT, SAFE_BOTTOM - h - 30
     if face is None:
         return img, (W - w) // 2, SAFE_TOP
     fx, fy, fw, fh = face
@@ -190,6 +272,9 @@ def place_photo(e, img, face, W):
 def main(inp, fx_path, out):
     fx = json.load(open(fx_path))
     punches, texts, photos = fx.get("punch_ins", []), fx.get("text_behind", []), fx.get("photos", [])
+    callouts = fx.get("callouts", [])
+    callout_imgs = [render_callout_lines(e) for e in callouts]
+    callout_pos = {}
 
     cap = cv2.VideoCapture(inp)
     fps = cap.get(cv2.CAP_PROP_FPS) or 30
@@ -298,6 +383,21 @@ def main(inp, fx_path, out):
         else:
             prev_mask = None
 
+        # --- callouts: captions as layout, hugging the head ---
+        for i, (e, imgs) in enumerate(zip(callouts, callout_imgs)):
+            if not (e["start"] <= t < e["end"]):
+                continue
+            if i not in callout_pos:
+                callout_pos[i] = place_callout(e, imgs, detect_face(frame, ts_ms), W)
+            for ln, (img, x, y) in zip(e["lines"], callout_pos[i]):
+                age = t - ln.get("at", e["start"])
+                if age < 0:
+                    continue
+                k = ease_out(age / 0.14)
+                lay = img.astype(np.float32)
+                lay[..., 3] *= min(k, ease_out((e["end"] - t) / 0.12))
+                frame = blend(frame, lay, x, y + int((1 - k) * 18))
+
         # --- photo overlays (on top of everything) ---
         for i, (e, imgs) in enumerate(zip(photos, photo_imgs)):
             if not (e["start"] <= t < e["end"]):
@@ -307,7 +407,7 @@ def main(inp, fx_path, out):
             if (i, j) not in placements:
                 placements[(i, j)] = place_photo(e, imgs[j], detect_face(frame, ts_ms), W)
             img, x, y = placements[(i, j)]
-            anim = e.get("anim", "cut")
+            anim = e.get("anim", "pop" if e.get("placement") == "reaction" else "cut")
             age, left = t - e["start"] - j * span, e["end"] - t
             if anim in ("fade", "pop"):
                 img = img.astype(np.float32)

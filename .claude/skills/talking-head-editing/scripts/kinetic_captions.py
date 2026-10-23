@@ -53,8 +53,8 @@ if a.mode == "build" and a.anchor == "top":
 elif a.mode == "build":  # middle anchor: bold diary captions
     a.size = 84 if a.size == 72 else a.size
     a.font = "Inter Display" if a.font == "Inter" else a.font
-if not 1000 <= a.baseline <= 1300:
-    p.error("--baseline must be 1000-1300 so captions stay clear of the TikTok/IG interface (safe zone ends at y 1400)")
+if not 600 <= a.baseline <= 1300:
+    p.error("--baseline must be 600-1300 so captions stay clear of the TikTok/IG interface (safe zone ends at y 1400)")
 if not 1000 <= a.mid_y <= 1300 and a.anchor == "middle":
     p.error("--mid-y must be 1000-1300 (safe zone)")
 if not 270 <= a.top <= 420:

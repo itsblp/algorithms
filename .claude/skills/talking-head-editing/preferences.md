@@ -110,6 +110,16 @@ cuts: dead air and filler only; no punch-ins, no B-roll, no music bed unless add
 note: if the top of the frame is bright (white wall), keep the shadow on, and consider framing a darker area at the top
 ```
 
+## Explainer Board settings (2026-10-23; see styles/explainer-board.md)
+```yaml
+canvas: "#FFFFFF"            # or brand off-white "#F4F1EC"
+ink: "#111111"
+card: {y: 170, w: 860, h: 760}
+shrink_at: 1.2               # full frame for the hook, then into the card
+handwriting: user's own iPad/paper drawings (Drive drawings/); fallback Caveat Bold
+notes: ≤ 2 lines, ≤ 4 words per line; circle or underline the key term; clear between points
+```
+
 ## Audio
 ```yaml
 master_music: none            # default — add a platform-native sound in each app

@@ -1,6 +1,6 @@
 ---
 name: talking-head-editing
-description: Edit talking-head (person-speaking-to-camera) short-form videos for Instagram Reels and TikTok in the user's house style, automatically choosing a style (Quiet Take or Story Cut) from the footage. Use when the user shares a talking-head clip, transcript, or script, or asks to cut, tighten, caption, add B-roll or zooms to, plan, review, or export a talking-head/face-cam/vlog-style video, Reel, or TikTok. (Voiceover montages over many short clips are a separate format: use voiceover-montage.) Produces a hook rewrite, cut list, burned-in caption file, zoom/B-roll plan, ffmpeg commands, and post copy.
+description: Edit talking-head (person-speaking-to-camera) short-form videos for Instagram Reels and TikTok in the user's house style, automatically choosing a style (Quiet Take, Explainer Board or Story Cut) from the footage and content. Use when the user shares a talking-head clip, transcript, or script, or asks to cut, tighten, caption, add B-roll or zooms to, plan, review, or export a talking-head/face-cam/vlog-style video, Reel, or TikTok. (Voiceover montages over many short clips are a separate format: use voiceover-montage.) Produces a hook rewrite, cut list, burned-in caption file, zoom/B-roll plan, ffmpeg commands, and post copy.
 ---
 
 # Talking-head video editing
@@ -13,12 +13,13 @@ Before doing anything, load these:
 
 ## Step 0 — Choose the style (always, before editing)
 
-There are two named styles in `styles/`: **Quiet Take** and **Story Cut**. The user doesn't have to pick one. Claude chooses from the footage. If the footage is a voice note plus many short candid clips, it isn't a talking head at all: hand off to the **voiceover-montage** skill (a separate format, never mixed with talking heads or carousels).
+There are three named styles in `styles/`: **Quiet Take**, **Explainer Board** and **Story Cut**. The user doesn't have to pick one. Claude chooses from the footage. If the footage is a voice note plus many short candid clips, it isn't a talking head at all: hand off to the **voiceover-montage** skill (a separate format, never mixed with talking heads or carousels).
 
 1. Run `python3 scripts/analyze_footage.py <files or folder>`. It reports the framing (selfie close-up / medium / no face), speech, clip lengths, voiceover files, camera motion, caption-band brightness and low-res warnings, plus a recommended style.
 2. Sanity-check the recommendation against the content and the Notion card:
    - An answer to a follower question or a reflective routine → Quiet Take.
    - An emotional or episodic story told over many short clips → not this skill; use voiceover-montage.
+   - A framework, list, equation or step-by-step (often Recipe: Freedom math, Skateboard → car, Open the door) → Explainer Board, whatever the footage. The analyzer can't see content, so this overrides its pick.
    - A story with named people or places or quotes → Story Cut.
 3. Tell the user the choice in **one line** with the reason (e.g. "Quiet Take: one selfie take while you do skincare, so a calm top-caption edit"). Then proceed without waiting. If the user names a style, use it.
 4. Follow that style's file for hook, cuts, captions and effects. Everything else in this file (safe zones, audio, QA, export, post copy) applies to all styles.

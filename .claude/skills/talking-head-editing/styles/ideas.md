@@ -1,4 +1,4 @@
-# Style ideas backlog (not yet built)
+# Style ideas backlog
 
 Ideas from references the user shared. Build one into a style only when the user asks for it.
 
@@ -7,3 +7,5 @@ Ideas from references the user shared. Build one into a style only when the user
 - **Reaction cutaway:** a small meme or reference image pops in lower-left for about 1 s on a punchline ("by doing that" → a Barbie image).
 - **Explainer Board layout (candidate third talking-head style):** the video shrinks into a card at the top of a white canvas, and the space below gets hand-drawn notes that write themselves on ("HOW TO EDIT TIPS", then a circle drawn around it). It fits frameworks and lists: Freedom Math, Skateboard → car, Open the door. It would need the user's own handwriting, e.g. iPad drawings exported as PNG (Claude animates a reveal), or a bundled handwriting font as a fallback. The canvas still has to respect the safe zone.
 - **Signature overlap:** she uses the same sans + serif-italic accent move (her accent is cream). The user's version is told apart by butter yellow and the one-accent-per-line rule. Revisit the accent font if more creators in the niche adopt it.
+
+**Built 2026-10-23:** callouts and reaction images (in Story Cut, via `effects.py`); Explainer Board (`styles/explainer-board.md`, `scripts/explainer_board.py`).
