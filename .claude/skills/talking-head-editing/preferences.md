@@ -49,7 +49,7 @@ caption_font: "Inter"         # bold weight; clean modern sans, installed in the
 caption_size_px: 72           # default (on 1080×1920)
 caption_case: Sentence        # default — plain and natural rather than ALL CAPS
 caption_color: "#FFFFFF"      # plain white
-caption_accent: none          # plain white only; emphasis comes from motion, not color
+caption_accent: signature     # one accent word per line — see "Signature look" below
 caption_outline_px: 4         # thin black outline for legibility on any B-roll
 caption_shadow_px: 0          # default
 caption_words_per_chunk: 2-3
