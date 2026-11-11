@@ -31,8 +31,9 @@ The user wants the story arc found and everything that doesn't drive it cut, wit
    - Target the length in preferences (30–45 s). Never cut a line that a later line depends on.
 4. `story_cut.py apply words.json sentences.json arc.json out/`. This removes fillers and pauses over 0.25 s, and writes `segments.txt`, `words_cut.json` (captions timed to the cut, with no re-transcription) and `arc_report.md`.
 5. `apply_cuts.py raw.mp4 out/segments.txt cut.mp4`.
-6. Captions from `out/words_cut.json`, then the grade, export and safe-zone check.
-7. Always show the user the story map (`arc_report.md`): what was kept, in what order, and what was cut and why. They can restore anything.
+6. **Tighten breaths and pauses from the audio** (always: Whisper's word timings run into breaths, so step 4 alone leaves them): `tighten.py cut.mp4 out/words_cut.json out/`, then `apply_cuts.py cut.mp4 out/tight_segments.txt tight.mp4`. Afterwards no quiet run should be longer than about 0.15 s. The user flagged leftover pauses and breaths on 2026-11-11, so treat any leftover as a bug.
+7. Captions from `out/words_tight.json`, then export (no grade) and the safe-zone check.
+8. Always show the user the story map (`arc_report.md`): what was kept, in what order, and what was cut and why. They can restore anything.
 
 ## Step 0 — Choose the style (always, before editing)
 
