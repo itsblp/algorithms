@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Overlapping-lines audio style: each new line starts while the last ~0.25 s of the previous line
-is still fading out underneath it (an L-cut on every sentence boundary). This gives voiceover-style
+"""Overlapping-lines audio style (the TikTok voiceover trend): each new line starts ~0.25 s before
+the previous line finishes, both at full volume, so the speech is one continuous, fast stream
+with no dead air (an L-cut on every sentence boundary). This gives voiceover-style
 momentum with no air between lines.
 
 Usage: overlap_lines.py tight.mp4 words_tight.json OUTDIR [--overlap 0.25]
 
 Run it AFTER tighten.py and apply_cuts.py (on the tightened video). Lines are sentences, found from
 the punctuation at the end of words (. ? !). Per boundary:
-  - audio: the next line starts `overlap` seconds before the previous one ends, at full volume;
-    the previous line's tail fades out under it;
+  - audio: the next line starts `overlap` seconds before the previous one ends; BOTH play at
+    full volume through the overlap (no fade; a limiter stops the doubled audio clipping);
   - video: cuts to the next line exactly when its audio starts, so its lip-sync is perfect; the
     previous line's tail plays over the new shot (L-cut).
 Only sentence boundaries overlap, never cuts inside a sentence.
@@ -53,11 +54,13 @@ g = []
 for i, (s, e) in enumerate(lines):
     vlen = (e - s) - (ov if i < n - 1 else 0)  # picture leaves line i when line i+1 starts
     g.append(f"[0:v]trim={s:.3f}:{s + vlen:.3f},setpts=PTS-STARTPTS[v{i}];")
-    fade = f",afade=t=out:st={(e - s) - ov:.3f}:d={ov:.3f}:curve=qsin" if i < n - 1 else ""
+    # no fade: both lines stay at full volume through the overlap (the user's spec); 10 ms edge
+    # ramps only, so the cut itself never clicks
+    fade = f",afade=t=out:st={max((e - s) - 0.01, 0):.3f}:d=0.01"
     g.append(f"[0:a]atrim={s:.3f}:{e:.3f},asetpts=PTS-STARTPTS,afade=t=in:d=0.01{fade},"
              f"adelay={int(offsets[i] * 1000)}:all=1[a{i}];")
 g.append("".join(f"[v{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v];")
-g.append("".join(f"[a{i}]" for i in range(n)) + f"amix=inputs={n}:normalize=0:duration=longest[a]")
+g.append("".join(f"[a{i}]" for i in range(n)) + f"amix=inputs={n}:normalize=0:duration=longest,alimiter=limit=0.95:level=disabled[a]")
 fpath = tempfile.mktemp(suffix=".filter")
 open(fpath, "w").write("".join(g))
 os.makedirs(a.outdir, exist_ok=True)
