@@ -88,33 +88,50 @@ def apply(words, sents, arc, outdir, max_pause, pad_pre, pad_post):
             ws = ws[:hits[0] + len(ph)]
         return ws
 
+    # A sentence stays ONE piece: pauses inside it are removed later by tighten.py (from the audio),
+    # never by splitting here. Splitting at pauses with margins made neighbouring pieces overlap in
+    # the source, which replayed the "c" of "consider" ("c-consider"). The only in-sentence split is
+    # around a filler word, cut exactly at the filler's edges (cap_hi / cap_lo, no margin).
+    caps = []  # per piece: (sentence id, cap_lo, cap_hi)
     for sid in arc["order"]:
-        ws = [w for w in trimmed(sid) if norm(w["word"]) not in FILLERS]
-        if not ws:
-            continue
-        run = [ws[0]]
-        for w in ws[1:]:
-            if w["start"] - run[-1]["end"] > max_pause:  # tighten dead air inside the sentence
-                pieces.append(run)
-                run = []
+        ws = trimmed(sid)
+        run, lo_cap = [], None
+        for w in ws:
+            if norm(w["word"]) in FILLERS:
+                if run:
+                    pieces.append(run)
+                    caps.append((sid, lo_cap, w["start"]))
+                run, lo_cap = [], w["end"]
+                continue
             run.append(w)
-        pieces.append(run)
+        if run:
+            pieces.append(run)
+            caps.append((sid, lo_cap, None))
     # Whisper often ends a word ~0.1 s before the sound actually stops, so pieces get generous
     # margins (tighten.py removes the extra silence later), but never reach into a neighbouring
     # word of the original take.
     key = lambda w: (round(w["start"], 3), round(w["end"], 3), w["word"])
     order = {key(w): k for k, w in enumerate(words)}
     segs, cut_words, t = [], [], 0.0
-    for run in pieces:
+    for run, (sid, cap_lo, cap_hi) in zip(pieces, caps):
         i0, i1 = order.get(key(run[0])), order.get(key(run[-1]))
         lo = words[i0 - 1]["end"] + 0.02 if i0 else 0.0
         hi = words[i1 + 1]["start"] - 0.02 if i1 is not None and i1 + 1 < len(words) else run[-1]["end"] + pad_post
         s0 = max(run[0]["start"] - pad_pre, lo, 0)
         s1 = max(min(run[-1]["end"] + pad_post, hi), run[-1]["end"])
+        if cap_lo is not None:   # right after a removed filler: start exactly where it ended
+            s0 = max(s0, cap_lo)
+        if cap_hi is not None:   # right before a removed filler: stop exactly where it starts
+            s1 = min(s1, cap_hi)
         segs.append((round(s0, 3), round(s1, 3)))
         for w in run:
             cut_words.append({**w, "start": round(t + w["start"] - s0, 3), "end": round(t + w["end"] - s0, 3)})
         t += s1 - s0
+    uniq = sorted(set(segs))
+    for (a0, a1), (b0, b1) in zip(uniq, uniq[1:]):
+        if b0 < a1 - 1e-6:
+            raise SystemExit(f"pieces overlap in the source ({a0}-{a1} and {b0}-{b1}): the same audio would "
+                             "play twice (a stutter). Fix the arc or trims before cutting.")
     os.makedirs(outdir, exist_ok=True)
     with open(os.path.join(outdir, "segments.txt"), "w") as f:
         f.write("".join(f"{a} {b}\n" for a, b in segs))

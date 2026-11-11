@@ -137,6 +137,11 @@ Dialogue: 0,0:00:00.00,0:00:00.80,Caption,,0,0,0,,THIS IS {\c&H0000E5FF&}HOW{\c&
 - [ ] No double captions (if burned in, app auto-captions are off)
 - [ ] Visual change at least every 4 s
 - [ ] No clipped words at cuts, no audio pops (add 10 ms fades at cut points if needed)
+- [ ] **`scripts/qa_audio.py final.mp4 words_final.json --names <brand names>` prints PASS. Never send an edit that fails it.** It checks three things:
+  - no doubled audio: the same source sound playing twice, like the "c-consider" stutter on 2026-11-11, caused by two kept pieces overlapping in the source (story_cut.py now refuses to do that);
+  - Whisper's re-transcription matches the caption words exactly;
+  - no word under 60% confidence.
+  If a mismatch is how she actually said it, check by transcribing the same moment in the raw footage, then fix the caption word ("inventories" on 2026-11-11), not the audio.
 - [ ] −14 LUFS ±1, peaks ≤ −1 dBTP
 - [ ] 1080×1920, H.264, `+faststart`, no watermark
 - [ ] Cover frame chosen, with cover text inside y 300–1400
