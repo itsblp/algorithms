@@ -11,6 +11,29 @@ Before doing anything, load these:
 
 3. If the video has a card in the Notion Founder Content Database, read its linked **Story atoms** (see `../content-strategist/SKILL.md`). Scripts, hooks, captions and on-screen text may only state facts those Verified atoms support. After transcribing, hand the transcript to the content-strategist's **Mine** loop, so new stories become Proposed atoms.
 
+## The look (every talking head, 2026-11-11)
+
+From the user's reference ("editing made / easy"). This applies to every style unless the user says otherwise:
+- **Captions:** `kinetic_captions.py` default `clean` mode. Small lowercase bold sans (Inter Display), 2–3 words at a time, no animation, soft shadow, lower-middle (baseline 1300).
+- **Hook title:** `--title "line one|line two"`, shown top-center for the first ~3 s. Line one is in Instrument Serif italic, line two in bold sans, both white, tight together. Write it as a 2–4 word topic label from the hook, e.g. `"having fun is|underrated"`.
+- **Grade:** moody and cinematic. Apply the `grade` filter from `preferences.md` before the captions in the final export.
+- **Effects:** none by default. Story Cut, Explainer Board and the callout/photo/marquee effects are added only when the content calls for them (see the styles).
+
+## Story editing (automatic, every video)
+
+The user wants the story arc found and everything that doesn't drive it cut, without being asked:
+1. `transcribe.py raw.mp4 > words.json`. Whisper is prompted to keep ums, so they can be cut.
+2. `story_cut.py analyze words.json > sentences.json`. This prints numbered sentences, with fillers, long pauses and retakes flagged.
+3. **Claude writes `arc.json`** by reading the sentences:
+   - Give each sentence a role: hook, context, tension, turn, insight, payoff or cta.
+   - Cut asides, tangents, repeats, throat-clearing intros ("so today I want to talk about"), weaker duplicate takes, and credits (credits move to the post caption). Every cut gets a reason.
+   - Put the strongest line first (cold open). Ending on the hook again makes a loop.
+   - Target the length in preferences (30–45 s). Never cut a line that a later line depends on.
+4. `story_cut.py apply words.json sentences.json arc.json out/`. This removes fillers and pauses over 0.25 s, and writes `segments.txt`, `words_cut.json` (captions timed to the cut, with no re-transcription) and `arc_report.md`.
+5. `apply_cuts.py raw.mp4 out/segments.txt cut.mp4`.
+6. Captions from `out/words_cut.json`, then the grade, export and safe-zone check.
+7. Always show the user the story map (`arc_report.md`): what was kept, in what order, and what was cut and why. They can restore anything.
+
 ## Step 0 — Choose the style (always, before editing)
 
 There are three named styles in `styles/`: **Quiet Take**, **Explainer Board** and **Story Cut**. The user doesn't have to pick one. Claude chooses from the footage. If the footage is a voice note plus many short candid clips, it isn't a talking head at all: hand off to the **voiceover-montage** skill (a separate format, never mixed with talking heads or carousels).

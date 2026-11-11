@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Story editing for talking heads: find the story arc, cut what doesn't drive it, and
+remove ums, false starts and dead air, automatically.
+
+Two steps:
+  1) story_cut.py analyze words.json > sentences.json
+       Splits the transcript into numbered sentences, and auto-flags fillers (um, uh, erm, hmm),
+       pauses longer than --max-pause, and retakes (a sentence restarted with the same opening
+       words; the last take is kept). Claude reads the printed sentence list and writes arc.json.
+  2) story_cut.py apply words.json sentences.json arc.json OUTDIR
+       Writes OUTDIR/segments.txt ("start end" per kept piece, for the cut filter),
+       OUTDIR/words_cut.json (word timings re-mapped onto the cut timeline, for captions, so there's
+       no second transcription) and OUTDIR/arc_report.md (the story map to show the user).
+
+arc.json (written by Claude, never by the user):
+{
+  "order": [10, 1, 3, 4, 5, 6, 8, 9, 10],    # sentence ids in final order; a repeat = loop ending
+  "roles": {"10": "hook", "1": "context", "3": "tension", "6": "turn", "8": "insight", "9": "payoff"},
+  "cut": {"2": "aside: credit moves to the post caption", "7": "repeats sentence 9"}
+}
+Roles: hook, context, tension, turn, insight, payoff, cta. Every sentence is either in "order" or
+in "cut" with a reason.
+"""
+import argparse
+import json
+import os
+import re
+
+FILLERS = {"um", "umm", "uh", "uhh", "erm", "er", "hmm", "mm", "ah"}
+
+
+def norm(w):
+    return re.sub(r"[^a-z0-9']", "", w.lower())
+
+
+def analyze(words, max_pause):
+    sents, cur = [], []
+    for w in words:
+        cur.append(w)
+        if re.search(r"[.?!]$", w["word"].strip()):
+            sents.append(cur)
+            cur = []
+    if cur:
+        sents.append(cur)
+    out = []
+    for i, s in enumerate(sents, 1):
+        fill = [k for k, w in enumerate(s) if norm(w["word"]) in FILLERS]
+        pauses = [round(s[k + 1]["start"] - s[k]["end"], 2) for k in range(len(s) - 1)
+                  if s[k + 1]["start"] - s[k]["end"] > max_pause]
+        out.append({"id": i, "start": s[0]["start"], "end": s[-1]["end"],
+                    "text": " ".join(w["word"].strip() for w in s), "fillers": len(fill),
+                    "long_pauses": pauses, "words": s})
+    for a, b in zip(out, out[1:]):  # retake: next sentence restarts with the same opening words
+        ha = [norm(w["word"]) for w in a["words"][:4]]
+        hb = [norm(w["word"]) for w in b["words"][:4]]
+        if len(ha) >= 3 and ha[:3] == hb[:3]:
+            a["retake_of_next"] = True
+    return out
+
+
+def apply(words, sents, arc, outdir, max_pause, pad):
+    by_id = {s["id"]: s for s in sents}
+    missing = [s["id"] for s in sents if s["id"] not in arc["order"] and str(s["id"]) not in arc.get("cut", {})]
+    if missing:
+        raise SystemExit(f"arc.json must place or cut every sentence; unhandled: {missing}")
+    pieces = []  # (src_start, src_end, [words]) in final order
+    for sid in arc["order"]:
+        ws = [w for w in by_id[sid]["words"] if norm(w["word"]) not in FILLERS]
+        if not ws:
+            continue
+        run = [ws[0]]
+        for w in ws[1:]:
+            if w["start"] - run[-1]["end"] > max_pause:  # tighten dead air inside the sentence
+                pieces.append(run)
+                run = []
+            run.append(w)
+        pieces.append(run)
+    segs, cut_words, t = [], [], 0.0
+    for run in pieces:
+        s0, s1 = max(run[0]["start"] - pad, 0), run[-1]["end"] + pad
+        segs.append((round(s0, 3), round(s1, 3)))
+        for w in run:
+            cut_words.append({**w, "start": round(t + w["start"] - s0, 3), "end": round(t + w["end"] - s0, 3)})
+        t += s1 - s0
+    os.makedirs(outdir, exist_ok=True)
+    with open(os.path.join(outdir, "segments.txt"), "w") as f:
+        f.write("".join(f"{a} {b}\n" for a, b in segs))
+    json.dump(cut_words, open(os.path.join(outdir, "words_cut.json"), "w"), indent=1)
+    raw = sents[-1]["end"] - sents[0]["start"]
+    rep = [f"# Story map\n\nRaw {raw:.1f} s → cut {t:.1f} s ({100 * (1 - t / raw):.0f}% removed).\n",
+           "| # | Role | Line |", "|---|---|---|"]
+    seen = set()
+    for sid in arc["order"]:
+        role = arc.get("roles", {}).get(str(sid), "")
+        rep.append(f"| {sid}{' (again)' if sid in seen else ''} | {role} | {by_id[sid]['text']} |")
+        seen.add(sid)
+    rep.append("\n**Cut:**\n")
+    rep += [f"- {sid}: {why} (\"{by_id[int(sid)]['text'][:70]}…\")" for sid, why in arc.get("cut", {}).items()]
+    fills = sum(s["fillers"] for s in sents)
+    rep.append(f"\nAlso removed: {fills} filler word(s) and every pause over {max_pause:.2f} s.")
+    open(os.path.join(outdir, "arc_report.md"), "w").write("\n".join(rep) + "\n")
+    print("\n".join(rep))
+
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("cmd", choices=["analyze", "apply"])
+    p.add_argument("files", nargs="+")
+    p.add_argument("--max-pause", type=float, default=0.25)
+    p.add_argument("--pad", type=float, default=0.06, help="seconds kept before/after each piece")
+    a = p.parse_args()
+    words = json.load(open(a.files[0]))
+    if a.cmd == "analyze":
+        sents = analyze(words, a.max_pause)
+        json.dump(sents, open(1, "w"), indent=1)
+        for s in sents:
+            flags = [f"{s['fillers']} filler"] if s["fillers"] else []
+            flags += [f"pauses {s['long_pauses']}"] if s["long_pauses"] else []
+            flags += ["RETAKE (next is a redo)"] if s.get("retake_of_next") else []
+            print(f"[{s['id']}] {s['start']:.1f}-{s['end']:.1f}s  {s['text']}  {'; '.join(flags)}",
+                  file=__import__("sys").stderr)
+    else:
+        apply(words, json.load(open(a.files[1])), json.load(open(a.files[2])), a.files[3], a.max_pause, a.pad)

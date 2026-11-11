@@ -59,6 +59,15 @@ emoji_in_captions: false
 punctuation_in_captions: false    # default — drop commas/periods; keep ? and !
 ```
 
+## The look (2026-11-11, from the user's "editing made easy" reference; replaces earlier caption defaults)
+```yaml
+captions: clean mode, lowercase, Inter Display Bold ~58 px, tight tracking, white, soft shadow, no outline, 2–3 words, baseline 1300
+hook_title: '"serif italic line|bold sans line"', white, top-center, ~3 s
+grade: "eq=brightness=-0.06:contrast=1.12:saturation=0.78:gamma=0.95,colorbalance=rs=-0.03:bs=0.04:rh=0.03:bh=-0.02,curves=all='0/0.05 0.5/0.44 1/0.93',vignette=angle=PI/5"
+accent_in_captions: off by default (the reference has none); the serif italic lives in the hook title
+story_editing: automatic: arc detection, filler/pause/aside cuts, cold-open hook, story map shown to the user
+```
+
 ## Signature look (2026-10-23): what makes the user's talking heads recognizable in feed
 ```yaml
 caption_font: Inter Display (Bold in Story Cut pop captions, Medium in Quiet Take top captions)

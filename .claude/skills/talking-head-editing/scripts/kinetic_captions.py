@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Build timed-to-speech ASS captions from words.json.
 
-Two modes:
+Three modes:
+  clean (DEFAULT, the user's reference look, 2026-11-11): small lowercase bold sans, 2-3 words at
+        a time, no animation, soft shadow, lower-middle (baseline 1300). --title "line one|line two"
+        shows a two-line hook title top-center: line one in Instrument Serif italic, line two in
+        bold sans, both white (like "editing made / easy").
   pop   (default, "produced" talking heads): chunks of 2-3 bold words laid out in full,
         each word invisible until spoken, then pops in. Middle of the frame (--baseline).
   build (Quiet Take; also used by the separate voiceover-montage skill): text that builds up word by word as it's spoken,
@@ -35,7 +39,7 @@ p.add_argument("--upper", action="store_true")
 p.add_argument("--keep-punct", action="store_true")
 p.add_argument("--pop-ms", type=int, default=90)
 p.add_argument("--gap", type=float, default=0.35, help="silence (s) that forces a new chunk")
-p.add_argument("--mode", choices=["pop", "build"], default="pop")
+p.add_argument("--mode", choices=["clean", "pop", "build"], default="clean")
 p.add_argument("--top", type=int, default=280, help="build mode: top edge of the caption block (y)")
 p.add_argument("--chars", type=int, default=48, help="build mode: max characters before the block clears")
 p.add_argument("--title", default="", help="hook title shown at the top before captions start")
@@ -47,6 +51,10 @@ p.add_argument("--accent-color", default="#F5D547", help="signature accent color
 p.add_argument("--accent-font", default="Instrument Serif", help="signature accent font (italic)")
 p.add_argument("--accent-scale", type=int, default=128, help="accent word size, %% of caption size")
 a = p.parse_args()
+if a.mode == "clean":
+    a.size = 58 if a.size == 72 else a.size
+    a.font = "Inter Display" if a.font == "Inter" else a.font
+    a.title_end = 3.0 if a.title_end == 1.8 else a.title_end
 if a.mode == "build" and a.anchor == "top":
     a.size = 54 if a.size == 72 else a.size
     a.font = "Inter Display Medium" if a.font == "Inter" else a.font
@@ -142,6 +150,8 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Caption,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,{a.outline},0,2,200,200,{1920 - a.baseline},1
+Style: Clean,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H8C000000,-1,0,0,0,100,100,-1,0,1,0,2,2,200,200,{1920 - a.baseline},1
+Style: TitleClean,Inter Display,132,&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,-1,0,0,0,100,100,-4,0,1,0,3,8,80,200,330,1
 Style: Build,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,{-1 if a.anchor == "middle" else 0},0,0,0,100,100,0,0,1,0,2,{8 if a.anchor == "top" else 2},200,200,{a.top if a.anchor == "top" else 1920 - a.mid_y},1
 Style: Big,Inter Display,128,&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,-1,0,0,0,100,100,-2,0,1,0,3,8,80,200,{a.top},1
 Style: Title,Inter Display SemiBold,84,&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,0,0,0,0,100,100,-1,0,1,0,3,7,80,200,{a.top},1
@@ -149,8 +159,37 @@ Style: Title,Inter Display SemiBold,84,&H00FFFFFF,&H00FFFFFF,&H00000000,&H780000
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text""")
 
-if a.title:
+if a.title and a.mode == "clean":
+    top, _, bottom = a.title.partition("|")
+    # two events so the lines can sit tight together, like the reference ("editing made / easy")
+    print(f"Dialogue: 1,{ts(0)},{ts(a.title_end)},TitleClean,,0,0,{a.top + 20},,"
+          f"{{\\fn{a.accent_font}\\i1\\b0\\fs172\\fsp-4}}{top.strip()}")
+    if bottom:
+        print(f"Dialogue: 1,{ts(0)},{ts(a.title_end)},TitleClean,,0,0,{a.top + 138},,"
+              f"{{\\fnInter Display\\i0\\b1\\fs146\\fsp-6}}{bottom.strip()}")
+elif a.title:
     print(f"Dialogue: 1,{ts(0)},{ts(a.title_end)},Title,,0,0,0,,{a.title}")
+if a.mode == "clean":
+    chunks_c, cur, n = [], [], 0
+    for w in words:
+        t_ = clean(w["word"]).lower()
+        if not t_:
+            continue
+        if cur and (len(cur) >= a.per_chunk or n + len(t_) > 18 or w["start"] - cur[-1]["end"] > a.gap
+                    or re.search(r"[.?!,]$", cur[-1]["word"])):
+            chunks_c.append(cur)
+            cur, n = [], 0
+        cur.append(w)
+        n += len(t_) + 1
+    if cur:
+        chunks_c.append(cur)
+    for i, c in enumerate(chunks_c):
+        end = c[-1]["end"] + 0.12
+        if i + 1 < len(chunks_c) and chunks_c[i + 1][0]["start"] - c[-1]["end"] < 0.5:
+            end = chunks_c[i + 1][0]["start"]
+        text = " ".join(accent(clean(w["word"]).lower(), w) for w in c)
+        print(f"Dialogue: 0,{ts(c[0]['start'])},{ts(end)},Clean,,0,0,0,,{text}")
+    raise SystemExit
 if a.mode == "build":
     print("\n".join(build_mode()))
     raise SystemExit
