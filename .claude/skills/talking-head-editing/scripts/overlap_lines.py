@@ -23,6 +23,8 @@ import re
 import subprocess
 import tempfile
 
+import numpy as np
+
 p = argparse.ArgumentParser()
 p.add_argument("video")
 p.add_argument("words")
@@ -33,11 +35,32 @@ a = p.parse_args()
 words = json.load(open(a.words))
 dur = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
                                      "-of", "csv=p=0", a.video]).strip())
-# cut points between lines: midway through the (already tiny) gap after a sentence-ending word
+# Line boundaries come from the AUDIO, not Whisper's timing (Whisper ends words early, which
+# clipped "lucky"): after each sentence-ending word, the line ends where its sound actually stops,
+# i.e. the first 30 ms of non-speech before the next line's audio begins.
+pcm = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", a.video, "-vn", "-ac", "1", "-ar", "16000",
+                      "-f", "f32le", "-"], capture_output=True, check=True).stdout
+x = np.frombuffer(pcm, np.float32)
+nf = len(x) // 160
+db = 20 * np.log10(np.sqrt((x[:nf * 160].reshape(nf, 160) ** 2).mean(axis=1) + 1e-12))
+thr = np.percentile(db, 90) - 18
+
+
+def next_onset(t_next):
+    """Where the next line's sound actually begins: walk back from just after Whisper's start of
+    the next word while it's still speech; the onset is the first loud frame after the last quiet
+    one. Everything before it, including the full tail of the previous word, stays with the
+    previous line (silences inside words, like the "c" in "lucky", can't fool this)."""
+    k = min(int((t_next + 0.08) * 100), nf - 1)
+    while k > 0 and db[k] >= thr:
+        k -= 1
+    return (k + 1) / 100
+
+
 cuts = [0.0]
 for w, nxt in zip(words, words[1:]):
     if re.search(r"[.?!][\"')]*$", w["word"].strip()):
-        cuts.append((w["end"] + nxt["start"]) / 2)
+        cuts.append(max(next_onset(nxt["start"]) - 0.01, w["end"]))
 cuts.append(dur)
 lines = [(s, e) for s, e in zip(cuts, cuts[1:]) if e - s > a.overlap * 2]
 ov = a.overlap

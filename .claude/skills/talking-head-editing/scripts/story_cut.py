@@ -59,7 +59,7 @@ def analyze(words, max_pause):
     return out
 
 
-def apply(words, sents, arc, outdir, max_pause, pad):
+def apply(words, sents, arc, outdir, max_pause, pad_pre, pad_post):
     by_id = {s["id"]: s for s in sents}
     missing = [s["id"] for s in sents if s["id"] not in arc["order"] and str(s["id"]) not in arc.get("cut", {})]
     if missing:
@@ -99,9 +99,18 @@ def apply(words, sents, arc, outdir, max_pause, pad):
                 run = []
             run.append(w)
         pieces.append(run)
+    # Whisper often ends a word ~0.1 s before the sound actually stops, so pieces get generous
+    # margins (tighten.py removes the extra silence later), but never reach into a neighbouring
+    # word of the original take.
+    key = lambda w: (round(w["start"], 3), round(w["end"], 3), w["word"])
+    order = {key(w): k for k, w in enumerate(words)}
     segs, cut_words, t = [], [], 0.0
     for run in pieces:
-        s0, s1 = max(run[0]["start"] - pad, 0), run[-1]["end"] + pad
+        i0, i1 = order.get(key(run[0])), order.get(key(run[-1]))
+        lo = words[i0 - 1]["end"] + 0.02 if i0 else 0.0
+        hi = words[i1 + 1]["start"] - 0.02 if i1 is not None and i1 + 1 < len(words) else run[-1]["end"] + pad_post
+        s0 = max(run[0]["start"] - pad_pre, lo, 0)
+        s1 = max(min(run[-1]["end"] + pad_post, hi), run[-1]["end"])
         segs.append((round(s0, 3), round(s1, 3)))
         for w in run:
             cut_words.append({**w, "start": round(t + w["start"] - s0, 3), "end": round(t + w["end"] - s0, 3)})
@@ -132,7 +141,8 @@ if __name__ == "__main__":
     p.add_argument("cmd", choices=["analyze", "apply"])
     p.add_argument("files", nargs="+")
     p.add_argument("--max-pause", type=float, default=0.25)
-    p.add_argument("--pad", type=float, default=0.06, help="seconds kept before/after each piece")
+    p.add_argument("--pad-pre", type=float, default=0.15, help="max seconds kept before each piece")
+    p.add_argument("--pad-post", type=float, default=0.30, help="max seconds kept after each piece (word tails)")
     a = p.parse_args()
     words = json.load(open(a.files[0]))
     if a.cmd == "analyze":
@@ -145,4 +155,4 @@ if __name__ == "__main__":
             print(f"[{s['id']}] {s['start']:.1f}-{s['end']:.1f}s  {s['text']}  {'; '.join(flags)}",
                   file=__import__("sys").stderr)
     else:
-        apply(words, json.load(open(a.files[1])), json.load(open(a.files[2])), a.files[3], a.max_pause, a.pad)
+        apply(words, json.load(open(a.files[1])), json.load(open(a.files[2])), a.files[3], a.max_pause, a.pad_pre, a.pad_post)
