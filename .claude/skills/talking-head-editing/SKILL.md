@@ -32,8 +32,9 @@ The user wants the story arc found and everything that doesn't drive it cut, wit
 4. `story_cut.py apply words.json sentences.json arc.json out/`. This removes fillers and pauses over 0.25 s, and writes `segments.txt`, `words_cut.json` (captions timed to the cut, with no re-transcription) and `arc_report.md`.
 5. `apply_cuts.py raw.mp4 out/segments.txt cut.mp4`.
 6. **Tighten breaths and pauses from the audio** (always: Whisper's word timings run into breaths, so step 4 alone leaves them): `tighten.py cut.mp4 out/words_cut.json out/`, then `apply_cuts.py cut.mp4 out/tight_segments.txt tight.mp4`. Afterwards no quiet run should be longer than about 0.15 s. The user flagged leftover pauses and breaths on 2026-11-11, so treat any leftover as a bug.
-7. Captions from `out/words_tight.json`, then export (no grade) and the safe-zone check.
-8. Always show the user the story map (`arc_report.md`): what was kept, in what order, and what was cut and why. They can restore anything.
+7. **Overlap the lines** (the user's preferred voiceover-style audio, 2026-11-11): `overlap_lines.py tight.mp4 out/words_tight.json out/ --overlap 0.25`. At each sentence boundary the next line starts at full volume while the previous line's last 0.25 s fades out underneath (an L-cut), and the picture cuts to the new line as its audio starts, so lip-sync holds. Only sentence boundaries overlap. Skip it only if the user asks for a calmer read.
+8. Captions from `out/words_overlap.json`, then export (no grade) and the safe-zone check.
+9. Always show the user the story map (`arc_report.md`): what was kept, in what order, and what was cut and why. They can restore anything.
 
 ## Step 0 — Choose the style (always, before editing)
 

@@ -65,6 +65,7 @@ captions: clean mode, lowercase, Inter Tight SemiBold (bundled) ~58 px, tracking
 hook_title: '"serif italic line|bold sans line"': Playfair Display italic + Inter Tight SemiBold, both tracked very tight (about -8%), white, top-center, ~3 s. Chosen by the user from a side-by-side match test against the reference (2026-11-11); no paid fonts needed
 grade: none  # 2026-11-11: the user disliked the dark cinematic grade on iPhone footage; keep the natural iPhone look. Only fix obvious exposure or white-balance problems, lightly.
 accent_in_captions: off by default (the reference has none); the serif italic lives in the hook title
+audio_flow: overlapping lines: next line starts 0.25 s before the previous ends (previous tail fades under it); breaths and pauses removed first (2026-11-11)
 story_editing: automatic: arc detection, filler/pause/aside cuts, cold-open hook, story map shown to the user
 ```
 
