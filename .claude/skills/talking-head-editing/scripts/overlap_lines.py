@@ -30,6 +30,9 @@ p.add_argument("video")
 p.add_argument("words")
 p.add_argument("outdir")
 p.add_argument("--overlap", type=float, default=0.25)
+p.add_argument("--skip-after", nargs="*", default=[],
+               help='sentence-ending words whose transition gets NO overlap, e.g. --skip-after lucky '
+                    '(for a line whose last word gets swallowed by the next line)')
 a = p.parse_args()
 
 words = json.load(open(a.words))
@@ -63,19 +66,28 @@ for w, nxt in zip(words, words[1:]):
         cuts.append(max(next_onset(nxt["start"]) - 0.01, w["end"]))
 cuts.append(dur)
 lines = [(s, e) for s, e in zip(cuts, cuts[1:]) if e - s > a.overlap * 2]
-ov = a.overlap
 n = len(lines)
 
-# timeline offsets: each line starts `ov` before the previous one ends
+
+def last_word(e):
+    """Sentence-ending word whose line ends at e (normalized)."""
+    ws = [w for w in words if w["end"] <= e + 0.3 and re.search(r"[.?!][\"')]*$", w["word"].strip())]
+    return re.sub(r"[^a-z0-9']", "", ws[-1]["word"].lower()) if ws else ""
+
+
+skip = {re.sub(r"[^a-z0-9']", "", w.lower()) for w in a.skip_after}
+ovs = [0.0 if (i == n - 1 or last_word(e) in skip) else a.overlap for i, (s, e) in enumerate(lines)]
+
+# timeline offsets: each line starts ovs[i] before the previous one ends
 offsets, t = [], 0.0
-for s, e in lines:
+for (s, e), o in zip(lines, ovs):
     offsets.append(t)
-    t += (e - s) - ov
-total = t + ov
+    t += (e - s) - o
+total = t
 
 g = []
 for i, (s, e) in enumerate(lines):
-    vlen = (e - s) - (ov if i < n - 1 else 0)  # picture leaves line i when line i+1 starts
+    vlen = (e - s) - ovs[i]  # picture leaves line i when line i+1 starts
     g.append(f"[0:v]trim={s:.3f}:{s + vlen:.3f},setpts=PTS-STARTPTS[v{i}];")
     # no fade: both lines stay at full volume through the overlap (the user's spec); 10 ms edge
     # ramps only, so the cut itself never clicks
@@ -103,5 +115,5 @@ def remap(x):
 
 json.dump([{**w, "start": remap(w["start"]), "end": remap(w["end"])} for w in words],
           open(os.path.join(a.outdir, "words_overlap.json"), "w"), indent=1)
-print(f"{n} lines, {n - 1} overlaps of {ov:.2f} s: {dur:.1f} s -> {total:.1f} s")
+print(f"{n} lines; overlaps (s): {', '.join(f'{o:.2f}' for o in ovs[:-1])}; {dur:.1f} s -> {total:.1f} s")
 print(out)
