@@ -17,7 +17,7 @@ m = re.search(r"/d/([\w-]{20,})", link) or re.search(r"[?&]id=([\w-]{20,})", lin
 if not m:
     sys.exit("could not find a Drive file id in that link")
 url = f"https://drive.usercontent.google.com/download?id={m.group(1)}&export=download&confirm=t"
-subprocess.run(["curl", "-L", "--fail", "--retry", "3", "-o", out, url], check=True)
+subprocess.run(["curl", "-L", "--fail", "--retry", "3", "-C", "-", "-o", out, url], check=True)  # -C -: resume
 head = open(out, "rb").read(512)
 if b"<html" in head.lower():
     sys.exit("Drive returned a web page instead of the file: the link is probably not set to "

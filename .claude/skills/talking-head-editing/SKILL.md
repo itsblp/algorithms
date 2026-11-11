@@ -16,7 +16,7 @@ Before doing anything, load these:
 From the user's reference ("editing made / easy"). This applies to every style unless the user says otherwise:
 - **Captions:** `kinetic_captions.py` default `clean` mode. Small lowercase bold sans (Inter Display), 2–3 words at a time, no animation, soft shadow, lower-middle (baseline 1300).
 - **Hook title:** `--title "line one|line two"`, shown top-center for the first ~3 s. Line one is in Instrument Serif italic, line two in bold sans, both white, tight together. Write it as a 2–4 word topic label from the hook, e.g. `"having fun is|underrated"`.
-- **Grade:** moody and cinematic. Apply the `grade` filter from `preferences.md` before the captions in the final export.
+- **Grade:** none. The user prefers the natural iPhone look (2026-11-11). Only correct obvious exposure or white-balance problems, lightly.
 - **Effects:** none by default. Story Cut, Explainer Board and the callout/photo/marquee effects are added only when the content calls for them (see the styles).
 
 ## Story editing (automatic, every video)

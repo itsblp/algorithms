@@ -63,7 +63,7 @@ punctuation_in_captions: false    # default — drop commas/periods; keep ? and 
 ```yaml
 captions: clean mode, lowercase, Inter Tight SemiBold (bundled) ~58 px, tracking -3, white, soft shadow, no outline, 2–3 words, baseline 1300
 hook_title: '"serif italic line|bold sans line"': Playfair Display italic + Inter Tight SemiBold, both tracked very tight (about -8%), white, top-center, ~3 s. Chosen by the user from a side-by-side match test against the reference (2026-11-11); no paid fonts needed
-grade: "eq=brightness=-0.06:contrast=1.12:saturation=0.78:gamma=0.95,colorbalance=rs=-0.03:bs=0.04:rh=0.03:bh=-0.02,curves=all='0/0.05 0.5/0.44 1/0.93',vignette=angle=PI/5"
+grade: none  # 2026-11-11: the user disliked the dark cinematic grade on iPhone footage; keep the natural iPhone look. Only fix obvious exposure or white-balance problems, lightly.
 accent_in_captions: off by default (the reference has none); the serif italic lives in the hook title
 story_editing: automatic: arc detection, filler/pause/aside cuts, cold-open hook, story map shown to the user
 ```
