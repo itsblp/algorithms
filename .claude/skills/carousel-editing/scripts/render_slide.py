@@ -14,6 +14,11 @@ Styles ("style" key; see ../styles/):
   photo_stack  (default when "photo" is set) full-bleed photo + stacked mixed-size cream type
                low-left.  Keys: photo, focus_y, lines [{text, size, gap_before}], bottom, gradient,
                shadow (default false: the user wants no shadow on any lettering)
+  photo_clean  full-bleed photo, darkened, with one simple text block low-left: a headline in ONE
+               weight and size and an optional smaller body line, plain white, no accent font, no
+               shadow (the user's simpler overlay, 2026-11-11). Keys: photo, focus_y, headline,
+               body, darken (0-1, default 0.35), gradient (bottom shade, default 0.55),
+               headline_size (default 84), body_size (default 40)
   thesis       solid background, one big statement.  Keys: kicker (small caps label, optional),
                lines [{text, size, gap_before}], body (small paragraph, optional),
                theme "light" (#F4F1EC, ink) | "dark" (#111111, off-white)
@@ -29,7 +34,7 @@ import random
 import re
 import sys
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 W, H = 1080, 1920
 IG_TOP, IG_H = 285, 1350
@@ -131,6 +136,46 @@ def photo_stack(c):
     return Image.alpha_composite(base, layer)
 
 
+def wrap(text, font, max_w):
+    out, cur = [], ""
+    for w_ in text.split():
+        if cur and font.getlength(f"{cur} {w_}") > max_w:
+            out.append(cur)
+            cur = w_
+        else:
+            cur = f"{cur} {w_}".strip()
+    return out + ([cur] if cur else [])
+
+
+def photo_clean(c):
+    img = cover(ImageOps.exif_transpose(Image.open(c["photo"])).convert("RGB"), c.get("focus_y", 0.4))
+    img = Image.blend(img, Image.new("RGB", (W, H), (0, 0, 0)), c.get("darken", 0.35)).convert("RGBA")
+    g = c.get("gradient", 0.55)
+    grad = Image.new("L", (1, H))
+    for y in range(H):  # deepens toward the bottom, behind the text block
+        grad.putpixel((0, y), 0 if y < 700 else round(255 * g * min(1, (y - 700) / 800)))
+    shade = Image.new("RGBA", (W, H), (0, 0, 0, 255))
+    shade.putalpha(grad.resize((W, H)))
+    img = Image.alpha_composite(img, shade)
+    d = ImageDraw.Draw(img)
+    hs, bs = c.get("headline_size", 84), c.get("body_size", 40)
+    hf = ImageFont.truetype(INTER + "InterDisplay-SemiBold.otf", hs)
+    bf = ImageFont.truetype(INTER + "InterDisplay-Regular.otf", bs)
+    hl = [ln for part in c["headline"].split("\n") for ln in wrap(part, hf, SAFE_R - SAFE_L)]  # "\n" = forced break
+    bl = wrap(c.get("body", ""), bf, SAFE_R - SAFE_L)
+    rows = [(t, hf, hs * 1.08, (255, 255, 255, 255)) for t in hl]
+    if bl:
+        rows += [(t, bf, bs * 1.4 + (bs * 0.9 if k == 0 else 0), (255, 255, 255, 225)) for k, t in enumerate(bl)]
+    y = c.get("bottom", 1360) - sum(r[2] for r in rows[1:])
+    if y - hs < SAFE_T:
+        raise SystemExit(f"{c['name']}: text runs above y {SAFE_T}; shorten it")
+    for k, (t, f, step, fill) in enumerate(rows):
+        if k:
+            y += step
+        d.text((SAFE_L, y), t, font=f, fill=fill, anchor="ls")
+    return img
+
+
 def thesis(c):
     dark = c.get("theme", "light") == "dark"
     bg, ink = (INK, OFFWHITE) if dark else (OFFWHITE, INK)
@@ -229,7 +274,8 @@ def center_block(img, bg, target_cy=880):
 
 def render(spec):
     style = spec.get("style", "photo_stack" if spec.get("photo") else "thesis")
-    img = {"photo_stack": photo_stack, "thesis": thesis, "notes": notes}[style](spec)
+    img = {"photo_stack": photo_stack, "thesis": thesis, "notes": notes,
+           "photo_clean": photo_clean}[style](spec)
     if style == "thesis":
         img = center_block(img, INK if spec.get("theme") == "dark" else OFFWHITE, spec.get("center_y", 880))
     elif style == "notes":

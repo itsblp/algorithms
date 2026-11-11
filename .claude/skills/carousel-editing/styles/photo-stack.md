@@ -6,3 +6,5 @@
 - Accent: one `*word*` per slide, ideally the number or the named thing (`*$40k*`). It renders in butter yellow.
 - Photos: vertical originals ≥ 1000 px, face in the upper half, a calm or darker lower half. `analyze_photos.py` checks this.
 - Render: `render_slide.py` with `"photo": ...` (the style is implied). Keys: `lines`, `focus_y`, `bottom`, `gradient`.
+
+**Simpler variant, `photo_clean` (2026-11-11, now the user's preference for photo carousels):** darkened photo, one white SemiBold headline + optional small body, no accent font. See preferences.md.

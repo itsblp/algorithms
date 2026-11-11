@@ -68,3 +68,4 @@ cta_text: "Comment \"KEYWORD\" and I'll send you ___"   # Claude picks a one-wor
 
 ## Notes from past carousels
 <!-- Claude appends dated one-line learnings here when the user gives feedback. -->
+- 2026-11-11: For photo carousels the user wants **simpler type over photos**: use `style: photo_clean`. That means a darkened photo (darken 0.35, plus a bottom shade 0.55 that goes up to ~0.75 over busy areas), one Inter Display SemiBold headline (84 px; the cover up to 92 px) with an optional Regular 40 px body line, plain white, low-left, no serif accent, no mixed sizes, no shadow. Use `\n` to avoid one-word last lines. Pick photos of the user's real business (Saelo's space, storefront, her at work) that match each slide's beat. Keep type off logos and screens.
