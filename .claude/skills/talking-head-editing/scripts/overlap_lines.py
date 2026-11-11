@@ -106,14 +106,24 @@ subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", a.video, "-filter_co
 os.remove(fpath)
 
 
-def remap(x):
-    for i, (s, e) in enumerate(lines):
-        if s <= x <= e:
-            return round(offsets[i] + (x - s), 3)
-    return round(x, 3)
+# Assign each word to its line by sentence order, NOT by time: Whisper often starts a line's first
+# word a hair before the audio boundary, which used to leave it on the previous line's timeline,
+# so its caption appeared ~0.25 s late, after the picture had already cut ("meanwhile" glitch).
+line_of, li = [], 0
+for k, w in enumerate(words):
+    line_of.append(min(li, n - 1))
+    if re.search(r"[.?!][\"')]*$", w["word"].strip()) and k + 1 < len(words):
+        if li + 1 < n and words[k + 1]["start"] >= lines[li][1] - 0.5:
+            li += 1
 
 
-json.dump([{**w, "start": remap(w["start"]), "end": remap(w["end"])} for w in words],
+def remap(x, i):
+    s, e = lines[i]
+    return round(offsets[i] + min(max(x - s, 0.0), e - s), 3)
+
+
+json.dump([{**w, "start": remap(w["start"], line_of[k]), "end": remap(w["end"], line_of[k])}
+           for k, w in enumerate(words)],
           open(os.path.join(a.outdir, "words_overlap.json"), "w"), indent=1)
 print(f"{n} lines; overlaps (s): {', '.join(f'{o:.2f}' for o in ovs[:-1])}; {dur:.1f} s -> {total:.1f} s")
 print(out)
