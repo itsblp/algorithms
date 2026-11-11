@@ -23,6 +23,12 @@ Styles ("style" key; see ../styles/):
                Medium Italic above, the headline below in Inter Tight SemiBold at 93% of the serif
                size, same tracking and tight 0.77x baseline gap as title_card.py), sized by
                serif_size (default 112). Use it on covers so carousels match the Reels.
+  typeset      full-bleed photo (darkened) + free-form typography for designed covers that mix
+               fonts and overlap lines (the user's cover references, 2026-11-11). Keys: photo,
+               focus_y, darken, gradient, top_shade, and "elements": [{text, font (file in
+               short-form-platform-specs/fonts or Inter), size, x, y (baseline), anchor ("ls" left,
+               "ms" center, "rs" right), color, track (em), wght (variable-font weight),
+               box {fill, pad [l, t, r, b]} (a solid label behind the text)}]. No shadows.
   thesis       solid background, one big statement.  Keys: kicker (small caps label, optional),
                lines [{text, size, gap_before}], body (small paragraph, optional),
                theme "light" (#F4F1EC, ink) | "dark" (#111111, off-white)
@@ -182,6 +188,51 @@ def title_pair_rows(c):
     return rows
 
 
+def font_for(name, size, wght=None):
+    for path in (os.path.join(BRAND, name), os.path.join(INTER, name), name):
+        if os.path.exists(path):
+            f = ImageFont.truetype(path, size)
+            if wght is not None:
+                try:
+                    axes = f.get_variation_axes()
+                    f.set_variation_by_axes([wght if a.get("name", b"") in (b"Weight", "Weight") or i == len(axes) - 1
+                                             else a["default"] for i, a in enumerate(axes)])
+                except OSError:
+                    pass
+            return f
+    raise SystemExit(f"font not found: {name}")
+
+
+def typeset(c):
+    img = cover(ImageOps.exif_transpose(Image.open(c["photo"])).convert("RGB"), c.get("focus_y", 0.4))
+    img = Image.blend(img, Image.new("RGB", (W, H), (0, 0, 0)), c.get("darken", 0.35)).convert("RGBA")
+    for key, top in (("gradient", False), ("top_shade", True)):
+        g = c.get(key, 0)
+        if g:
+            grad = Image.new("L", (1, H))
+            for y in range(H):
+                t = (1 - y / 1100) if top else (y - 700) / 1000
+                grad.putpixel((0, y), round(255 * g * min(1, max(0, t))))
+            shade = Image.new("RGBA", (W, H), (0, 0, 0, 255))
+            shade.putalpha(grad.resize((W, H)))
+            img = Image.alpha_composite(img, shade)
+    d = ImageDraw.Draw(img)
+    for e in c["elements"]:
+        f = font_for(e["font"], e["size"], e.get("wght"))
+        tr = e.get("track", 0) * e["size"]
+        width = sum(f.getlength(ch) for ch in e["text"]) + tr * (len(e["text"]) - 1)
+        x = e["x"] - {"l": 0, "m": width / 2, "r": width}[e.get("anchor", "ls")[0]]
+        fill = rgb(e.get("color", "#FFFFFF")) + (255,)
+        if e.get("box"):
+            l, t, r, b = e["box"].get("pad", [24, 18, 24, 18])
+            asc = e["size"] * 0.72
+            d.rectangle([x - l, e["y"] - asc - t, x + width + r, e["y"] + b], fill=rgb(e["box"]["fill"]) + (255,))
+        for ch in e["text"]:
+            d.text((x, e["y"]), ch, font=f, fill=fill, anchor="ls")
+            x += f.getlength(ch) + tr
+    return img
+
+
 def photo_clean(c):
     img = cover(ImageOps.exif_transpose(Image.open(c["photo"])).convert("RGB"), c.get("focus_y", 0.4))
     img = Image.blend(img, Image.new("RGB", (W, H), (0, 0, 0)), c.get("darken", 0.35)).convert("RGBA")
@@ -323,7 +374,7 @@ def center_block(img, bg, target_cy=880):
 def render(spec):
     style = spec.get("style", "photo_stack" if spec.get("photo") else "thesis")
     img = {"photo_stack": photo_stack, "thesis": thesis, "notes": notes,
-           "photo_clean": photo_clean}[style](spec)
+           "photo_clean": photo_clean, "typeset": typeset}[style](spec)
     if style == "thesis":
         img = center_block(img, INK if spec.get("theme") == "dark" else OFFWHITE, spec.get("center_y", 880))
     elif style == "notes":
