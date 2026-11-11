@@ -146,6 +146,7 @@ cta_text: "Comment \"KEYWORD\" and I'll send you ___"   # Claude picks a one-wor
 
 ## Notes from past edits
 <!-- Claude appends dated one-line learnings here when the user gives feedback. -->
+- 2026-11-11: customs-broker v10 = "legit golden" (the user approved it). This is the reference recipe: Cormorant Garamond + Inter Tight title, clean lowercase captions, no shadows, no grade, tighten + 0.25 s no-fade overlap (`--skip-after` for swallowed words), and qa_audio.py PASS. Glitches she hears are real: compare the spot against the raw take before changing anything, and never snip a sound you haven't confirmed as a stumble (a "false start" snip once cut "broker" to "bro").
 - 2026-11-11: "lucky" got clipped. Whisper ends words ~0.1 s early, so pieces now keep generous margins (0.15 s before, 0.3 s after, never into a neighbouring word), and line boundaries for the overlap come from the next line's audio onset. Always listen-check (via an energy plot) the last word of every line.
 - 2026-10-16: Old TikToks had the title and captions at about 77–88% of the frame height, which collided with the TikTok handle. Keep all text inside x 80–880, y 260–1400 (tightened 2026-10-16 from a TikTok screenshot) and run safe_zone_check before every export.
 - 2026-10-16: Typical framing is a medium shot, standing, with a handheld mic near the chin and little headroom (top of head at about y 300–400). Above-head photos come out small (about 300 px). For bigger photos, use `placement: auto` (chest), or ask the user to leave more headroom when filming.
