@@ -18,7 +18,11 @@ Styles ("style" key; see ../styles/):
                weight and size and an optional smaller body line, plain white, no accent font, no
                shadow (the user's simpler overlay, 2026-11-11). Keys: photo, focus_y, headline,
                body, darken (0-1, default 0.35), gradient (bottom shade, default 0.55),
-               headline_size (default 84), body_size (default 40)
+               headline_size (default 84), body_size (default 40).
+               Optional "serif": a lead-in line set in the Reel title's pair (Cormorant Garamond
+               Medium Italic above, the headline below in Inter Tight SemiBold at 93% of the serif
+               size, same tracking and tight 0.77x baseline gap as title_card.py), sized by
+               serif_size (default 112). Use it on covers so carousels match the Reels.
   thesis       solid background, one big statement.  Keys: kicker (small caps label, optional),
                lines [{text, size, gap_before}], body (small paragraph, optional),
                theme "light" (#F4F1EC, ink) | "dark" (#111111, off-white)
@@ -147,6 +151,37 @@ def wrap(text, font, max_w):
     return out + ([cur] if cur else [])
 
 
+SERIF_FONT = os.path.join(BRAND, "CormorantGaramond-MediumItalic.ttf")
+TIGHT_FONT = os.path.join(BRAND, "InterTight-SemiBold.ttf")
+
+
+def tracked(d, x, y, text, font, track, fill):
+    for ch in text:
+        d.text((x, y), ch, font=font, fill=fill, anchor="ls")
+        x += font.getlength(ch) + track * font.size
+
+
+def tracked_len(text, font, track):
+    return sum(font.getlength(ch) for ch in text) + track * font.size * (len(text) - 1)
+
+
+def title_pair_rows(c):
+    """Rows (text, font, track, step) for a serif lead-in + sans headline, fitted to the safe width."""
+    size = c.get("serif_size", 112)
+    while True:
+        sf = ImageFont.truetype(SERIF_FONT, size)
+        tf = ImageFont.truetype(TIGHT_FONT, round(size * 0.93))
+        ser = c["serif"].split("\n")
+        san = c["headline"].split("\n")
+        widest = max([tracked_len(t, sf, -0.045) for t in ser] + [tracked_len(t, tf, -0.058) for t in san])
+        if widest <= SAFE_R - SAFE_L or size <= 40:
+            break
+        size -= 2
+    rows = [(t, sf, -0.045, size * 0.95) for t in ser]
+    rows += [(t, tf, -0.058, size * (0.77 if k == 0 else 0.86)) for k, t in enumerate(san)]
+    return rows
+
+
 def photo_clean(c):
     img = cover(ImageOps.exif_transpose(Image.open(c["photo"])).convert("RGB"), c.get("focus_y", 0.4))
     img = Image.blend(img, Image.new("RGB", (W, H), (0, 0, 0)), c.get("darken", 0.35)).convert("RGBA")
@@ -161,6 +196,19 @@ def photo_clean(c):
     hs, bs = c.get("headline_size", 84), c.get("body_size", 40)
     hf = ImageFont.truetype(INTER + "InterDisplay-SemiBold.otf", hs)
     bf = ImageFont.truetype(INTER + "InterDisplay-Regular.otf", bs)
+    if c.get("serif"):
+        rows = title_pair_rows(c)
+        bl = wrap(c.get("body", ""), bf, SAFE_R - SAFE_L)
+        body_rows = [(t, bf, 0, bs * 1.4 + (bs * 0.9 if k == 0 else 0)) for k, t in enumerate(bl)]
+        allr = rows + body_rows
+        y = c.get("bottom", 1360) - sum(r[3] for r in allr[1:])
+        if y - rows[0][1].size < SAFE_T:
+            raise SystemExit(f"{c['name']}: text runs above y {SAFE_T}; shorten it")
+        for k, (t, f, tr, step) in enumerate(allr):
+            if k:
+                y += step
+            tracked(d, SAFE_L, y, t, f, tr, (255, 255, 255, 255 if k < len(rows) else 225))
+        return img
     hl = [ln for part in c["headline"].split("\n") for ln in wrap(part, hf, SAFE_R - SAFE_L)]  # "\n" = forced break
     bl = wrap(c.get("body", ""), bf, SAFE_R - SAFE_L)
     rows = [(t, hf, hs * 1.08, (255, 255, 255, 255)) for t in hl]
