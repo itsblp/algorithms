@@ -16,7 +16,8 @@ arc.json (written by Claude, never by the user):
 {
   "order": [10, 1, 3, 4, 5, 6, 8, 9, 10],    # sentence ids in final order; a repeat = loop ending
   "roles": {"10": "hook", "1": "context", "3": "tension", "6": "turn", "8": "insight", "9": "payoff"},
-  "cut": {"2": "aside: credit moves to the post caption", "7": "repeats sentence 9"}
+  "cut": {"2": "aside: credit moves to the post caption", "7": "repeats sentence 9"},
+  "trim": {"15": {"from": "our very first bulk order got"}}   # optional: drop an in-sentence restart
 }
 Roles: hook, context, tension, turn, insight, payoff, cta. Every sentence is either in "order" or
 in "cut" with a reason.
@@ -64,8 +65,31 @@ def apply(words, sents, arc, outdir, max_pause, pad):
     if missing:
         raise SystemExit(f"arc.json must place or cut every sentence; unhandled: {missing}")
     pieces = []  # (src_start, src_end, [words]) in final order
+    def trimmed(sid):
+        """Optional "trim": {"15": {"from": "our very first bulk order got", "to": "..."}} keeps only
+        the clean part of a sentence (drops an in-sentence stumble or restart). Phrases match the
+        LAST occurrence for "from" and the first for "to"."""
+        ws = by_id[sid]["words"]
+        t = arc.get("trim", {}).get(str(sid))
+        if not t:
+            return ws
+        toks = [norm(w["word"]) for w in ws]
+        if t.get("from"):
+            ph = [norm(x) for x in t["from"].split()]
+            hits = [k for k in range(len(toks)) if toks[k:k + len(ph)] == ph]
+            if not hits:
+                raise SystemExit(f"trim 'from' phrase not found in sentence {sid}: {t['from']}")
+            ws, toks = ws[hits[-1]:], toks[hits[-1]:]
+        if t.get("to"):
+            ph = [norm(x) for x in t["to"].split()]
+            hits = [k for k in range(len(toks)) if toks[k:k + len(ph)] == ph]
+            if not hits:
+                raise SystemExit(f"trim 'to' phrase not found in sentence {sid}: {t['to']}")
+            ws = ws[:hits[0] + len(ph)]
+        return ws
+
     for sid in arc["order"]:
-        ws = [w for w in by_id[sid]["words"] if norm(w["word"]) not in FILLERS]
+        ws = [w for w in trimmed(sid) if norm(w["word"]) not in FILLERS]
         if not ws:
             continue
         run = [ws[0]]
@@ -92,7 +116,8 @@ def apply(words, sents, arc, outdir, max_pause, pad):
     seen = set()
     for sid in arc["order"]:
         role = arc.get("roles", {}).get(str(sid), "")
-        rep.append(f"| {sid}{' (again)' if sid in seen else ''} | {role} | {by_id[sid]['text']} |")
+        line = " ".join(w["word"].strip() for w in trimmed(sid))
+        rep.append(f"| {sid}{' (again)' if sid in seen else ''} | {role} | {line}{' ✂' if str(sid) in arc.get('trim', {}) else ''} |")
         seen.add(sid)
     rep.append("\n**Cut:**\n")
     rep += [f"- {sid}: {why} (\"{by_id[int(sid)]['text'][:70]}…\")" for sid, why in arc.get("cut", {}).items()]
