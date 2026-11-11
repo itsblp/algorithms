@@ -6,3 +6,4 @@ Render with libass via `ass=captions.ass:fontsdir=<this folder>`, or install the
 - `Caveat-Bold.ttf`: Caveat by Impallari Type, SIL Open Font License 1.1. Handwriting fallback for Explainer Board notes when the user hasn't supplied her own drawings.
 - `PlayfairDisplay-Italic.ttf`: Playfair Display Italic by Claus Eggers Sørensen, SIL Open Font License 1.1. The talking-head hook title serif (matches the user's "editing made easy" reference).
 - `InterTight-SemiBold.ttf`: Inter Tight SemiBold by Rasmus Andersson, SIL Open Font License 1.1. Talking-head captions and the title's sans line (chosen by the user 2026-11-11).
+- `CormorantGaramond-MediumItalic.ttf`: Cormorant Garamond Medium Italic by Christian Thalmann, SIL Open Font License 1.1. The talking-head hook title serif (chosen by the user 2026-11-11, replacing Playfair Display).

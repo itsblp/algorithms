@@ -3,7 +3,8 @@
 
 Three modes:
   clean (DEFAULT, the user's reference look, 2026-11-11): small lowercase bold sans, 2-3 words at
-        a time, no animation, soft shadow, lower-middle (baseline 1300). --title "line one|line two"
+        a time, no animation, NO shadow or outline (user preference), lower-middle (baseline 1300).
+        For the hook title use title_card.py (exact spacing), not --title. --title "line one|line two"
         shows a two-line hook title top-center: line one in Playfair Display italic, line two in
         Inter Tight SemiBold, both white and tightly tracked (like "editing made / easy").
   pop   (default, "produced" talking heads): chunks of 2-3 bold words laid out in full,
@@ -150,7 +151,7 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Caption,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,{a.outline},0,2,200,200,{1920 - a.baseline},1
-Style: Clean,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H8C000000,0,0,0,0,100,100,-3,0,1,0,2,2,200,200,{1920 - a.baseline},1
+Style: Clean,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,-3,0,1,0,0,2,200,200,{1920 - a.baseline},1
 Style: TitleClean,Inter Display,132,&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,-1,0,0,0,100,100,-4,0,1,0,3,8,80,200,330,1
 Style: Build,{a.font},{a.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,{-1 if a.anchor == "middle" else 0},0,0,0,100,100,0,0,1,0,2,{8 if a.anchor == "top" else 2},200,200,{a.top if a.anchor == "top" else 1920 - a.mid_y},1
 Style: Big,Inter Display,128,&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,-1,0,0,0,100,100,-2,0,1,0,3,8,80,200,{a.top},1

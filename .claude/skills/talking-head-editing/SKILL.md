@@ -14,8 +14,8 @@ Before doing anything, load these:
 ## The look (every talking head, 2026-11-11)
 
 From the user's reference ("editing made / easy"). This applies to every style unless the user says otherwise:
-- **Captions:** `kinetic_captions.py` default `clean` mode. Small lowercase bold sans (Inter Display), 2–3 words at a time, no animation, soft shadow, lower-middle (baseline 1300).
-- **Hook title:** `--title "line one|line two"`, shown top-center for the first ~3 s. Line one is in Instrument Serif italic, line two in bold sans, both white, tight together. Write it as a 2–4 word topic label from the hook, e.g. `"having fun is|underrated"`.
+- **Captions:** `kinetic_captions.py` default `clean` mode. Small lowercase Inter Tight SemiBold, 2–3 words at a time, no animation, NO shadow or outline, lower-middle (baseline 1300).
+- **Hook title:** `title_card.py "line one" "line two" title.png`, overlaid for the first ~3 s (`overlay=enable='between(t,0,3)'`). Line one is Cormorant Garamond Medium Italic, line two Inter Tight SemiBold, both white, with no shadow. The spacing is exact: letter spacing −4.5% and −5.8%, and the gap between lines is 0.77× the serif size (the user's pick, 2026-11-11). Write it as a 2–4 word topic label, e.g. `"never in the" "business plan"`.
 - **Grade:** none. The user prefers the natural iPhone look (2026-11-11). Only correct obvious exposure or white-balance problems, lightly.
 - **Effects:** none by default. Story Cut, Explainer Board and the callout/photo/marquee effects are added only when the content calls for them (see the styles).
 

@@ -61,8 +61,8 @@ punctuation_in_captions: false    # default — drop commas/periods; keep ? and 
 
 ## The look (2026-11-11, from the user's "editing made easy" reference; replaces earlier caption defaults)
 ```yaml
-captions: clean mode, lowercase, Inter Tight SemiBold (bundled) ~58 px, tracking -3, white, soft shadow, no outline, 2–3 words, baseline 1300
-hook_title: '"serif italic line|bold sans line"': Playfair Display italic + Inter Tight SemiBold, both tracked very tight (about -8%), white, top-center, ~3 s. Chosen by the user from a side-by-side match test against the reference (2026-11-11); no paid fonts needed
+captions: clean mode, lowercase, Inter Tight SemiBold (bundled) ~58 px, tracking -3, white, NO shadow, no outline, 2–3 words, baseline 1300
+hook_title: title_card.py: Cormorant Garamond Medium Italic + Inter Tight SemiBold (sans at 93% size), tracking -4.5% / -5.8%, line gap 0.77x serif size, white, NO shadow, centered, ~3 s. The user's pick from the comparison board (2026-11-11)
 grade: none  # 2026-11-11: the user disliked the dark cinematic grade on iPhone footage; keep the natural iPhone look. Only fix obvious exposure or white-balance problems, lightly.
 accent_in_captions: off by default (the reference has none); the serif italic lives in the hook title
 audio_flow: overlapping lines: next line starts 0.25 s before the previous ends, both at full volume, NO fade (the TikTok overlapping-voiceover trend: a continuous, fast stream with no dead air); breaths and pauses removed first (2026-11-11)
