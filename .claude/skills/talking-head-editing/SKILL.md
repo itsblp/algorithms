@@ -53,6 +53,7 @@ If the footage fits no style well (e.g. a dark, low-res clip), say what's missin
 
 | Input | What to do |
 |---|---|
+| A Google Drive share link to raw footage (the way big files arrive: chat uploads are capped at 30 MB) | `python3 ../short-form-platform-specs/scripts/fetch_drive.py "<link>" raw.mp4`, then treat it as raw footage. Long takes (10+ min) usually hold several stories: map them all and offer the user 2–4 candidate videos with their hooks before cutting. |
 | Raw talking-head take(s) + B-roll clips | Probe everything with `ffprobe`. Transcribe with `scripts/transcribe.py` (run `pip install faster-whisper` first if it's missing), then run the full workflow and the **Full pipeline** at the bottom. Claude does the whole edit; there's no CapCut handoff unless the user asks for one. |
 | Transcript (with or without timestamps) | Run the full workflow and output a cut list and captions. |
 | Script / idea, not yet filmed | Run steps 1–2 only. Return a tightened script with hook options, plus filming notes (framing, eyeline, safe zone). |
