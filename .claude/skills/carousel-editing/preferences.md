@@ -23,7 +23,7 @@ handle: "@"                   # TODO: fill in
 The user's chosen carousel style. Every slide uses it unless the user asks otherwise.
 
 - **Full-bleed real photo** on every slide: the user, a space, an object. It's candid and warm, with natural light. No graphics, boxes, borders, stickers or icons.
-- **Type sits directly on the photo,** with no box, no outline and no visible scrim. Legibility comes from choosing photos with calm, mid-to-dark areas behind the text, plus an almost invisible bottom shade and soft shadow.
+- **Type sits directly on the photo,** with no box, no outline and no visible scrim. Legibility comes from choosing photos with calm, mid-to-dark areas behind the text, plus an almost invisible bottom shade. No shadow on the type (2026-11-11).
 - **Stacked, left-aligned type block in the lower half** of the 4:5 area, set in mixed sizes to create rhythm:
   1. **Lead-in** (medium, ~120–130 px): "I spent"
   2. **The number and the payoff** (huge, ~190–200 px, 1–2 lines): "$5,000 on a / 5 day glow up"
@@ -44,7 +44,7 @@ size_scale: {lead: 125, hero: 195, context: 115, note: 72}   # px on the 1080-wi
 text_align: left
 text_block_bottom_y: 1380     # on the 1080×1920 master (≈ y 1095 in the 4:5 IG crop); TikTok photo mode shows the handle below this
 bottom_shade: 0.3             # bottom gradient opacity
-text_shadow: 0.25             # soft, blurred, barely visible
+text_shadow: 0                # none: the user wants no shadows on any lettering, titles or captions (2026-11-11)
 accent: signature             # one *word* per slide: Instrument Serif Italic, #F5D547 (highlighter swipe on light backgrounds). Shared with talking heads and montages.
 fallback_background: "#F4F1EC"   # only when there's no photo
 ```

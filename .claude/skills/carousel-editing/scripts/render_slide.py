@@ -12,7 +12,8 @@ backgrounds it becomes ink-colored serif italic on a butter-yellow highlighter s
 
 Styles ("style" key; see ../styles/):
   photo_stack  (default when "photo" is set) full-bleed photo + stacked mixed-size cream type
-               low-left.  Keys: photo, focus_y, lines [{text, size, gap_before}], bottom, gradient
+               low-left.  Keys: photo, focus_y, lines [{text, size, gap_before}], bottom, gradient,
+               shadow (default false: the user wants no shadow on any lettering)
   thesis       solid background, one big statement.  Keys: kicker (small caps label, optional),
                lines [{text, size, gap_before}], body (small paragraph, optional),
                theme "light" (#F4F1EC, ink) | "dark" (#111111, off-white)
@@ -124,7 +125,8 @@ def photo_stack(c):
     layer, sh = Image.new("RGBA", (W, H), (0, 0, 0, 0)), Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d, sd = ImageDraw.Draw(layer), ImageDraw.Draw(sh)
     for ln, b in zip(lines, bases):
-        draw_line(d, SAFE_L, b + off, ln["text"], font, ln["size"], tracking, c.get("color", CREAM), "color", sd)
+        draw_line(d, SAFE_L, b + off, ln["text"], font, ln["size"], tracking, c.get("color", CREAM), "color",
+                  sd if c.get("shadow", False) else None)  # no shadows on lettering (user, 2026-11-11)
     base = Image.alpha_composite(base, sh.filter(ImageFilter.GaussianBlur(6)))
     return Image.alpha_composite(base, layer)
 
