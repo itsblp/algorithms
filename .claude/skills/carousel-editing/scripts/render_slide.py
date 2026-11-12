@@ -28,7 +28,9 @@ Styles ("style" key; see ../styles/):
                focus_y, darken, gradient, top_shade, and "elements": [{text, font (file in
                short-form-platform-specs/fonts or Inter), size, x, y (baseline), anchor ("ls" left,
                "ms" center, "rs" right), color, track (em), wght (variable-font weight),
-               box {fill, pad [l, t, r, b]} (a solid label behind the text)}]. No shadows.
+               box {fill, pad [l, t, r, b], text_color} (a solid label behind the text)}],
+               zoom + focus_x (tighter crop on the subject), left_shade (soft shade on the
+               left only). Text keeps the font's kerning and ligatures. No shadows.
   thesis       solid background, one big statement.  Keys: kicker (small caps label, optional),
                lines [{text, size, gap_before}], body (small paragraph, optional),
                theme "light" (#F4F1EC, ink) | "dark" (#111111, off-white)
@@ -58,6 +60,21 @@ ACCENT = "#F5D547"
 CREAM, OFFWHITE, INK = "#FBF4D6", "#F4F1EC", "#111111"
 
 
+def draw_kerned(d, x, y, text, font, track_px, fill):
+    """Draw text with the font's kerning, ligatures and contextual forms intact. With tracking,
+    each glyph sits at its kerned position (width of the prefix) plus the extra spacing."""
+    if not track_px:
+        d.text((x, y), text, font=font, fill=fill, anchor="ls")
+        return x + font.getlength(text)
+    for i, ch in enumerate(text):
+        d.text((x + font.getlength(text[:i]) + track_px * i, y), ch, font=font, fill=fill, anchor="ls")
+    return x + font.getlength(text) + track_px * (len(text) - 1)
+
+
+def kerned_len(text, font, track_px=0):
+    return font.getlength(text) + track_px * max(len(text) - 1, 0)
+
+
 def rgb(h):
     h = h.lstrip("#")
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
@@ -79,7 +96,7 @@ def line_width(text, base_font, size, tracking):
     for s, acc in segments(text):
         f = seg_font(base_font, size, acc)
         tr = 0 if acc else tracking * size
-        w += sum(f.getlength(c) for c in s) + tr * len(s)
+        w += kerned_len(s, f, tr) + tr
     return w
 
 
@@ -88,15 +105,13 @@ def draw_line(draw, x, base, text, base_font, size, tracking, color, accent_mode
     for s, acc in segments(text):
         f = seg_font(base_font, size, acc)
         tr = 0 if acc else tracking * size
-        seg_w = sum(f.getlength(c) for c in s) + tr * len(s)
+        seg_w = kerned_len(s, f, tr) + tr
         if acc and accent_mode == "highlight":
             draw.rectangle([x - 6, base - size * 0.42, x + seg_w + 2, base + size * 0.08], fill=rgb(ACCENT) + (255,))
         fill = (rgb(ACCENT) if acc and accent_mode == "color" else rgb(color)) + (255,)
-        for c in s:
-            if shadow_draw is not None:
-                shadow_draw.text((x + 2, base + 3), c, font=f, fill=(0, 0, 0, 70), anchor="ls")
-            draw.text((x, base), c, font=f, fill=fill, anchor="ls")
-            x += f.getlength(c) + tr
+        if shadow_draw is not None:
+            draw_kerned(shadow_draw, x + 2, base + 3, s, f, tr, (0, 0, 0, 70))
+        x = draw_kerned(draw, x, base, s, f, tr, fill) + tr
     return x
 
 
@@ -112,10 +127,10 @@ def fit(lines, base_font, tracking, max_w):
 
 # ---------- styles ----------
 
-def cover(img, focus_y):
-    s = max(W / img.width, H / img.height)
+def cover(img, focus_y, zoom=1.0, focus_x=0.5):
+    s = max(W / img.width, H / img.height) * zoom
     img = img.resize((round(img.width * s), round(img.height * s)), Image.LANCZOS)
-    left = (img.width - W) // 2
+    left = round((img.width - W) * focus_x)
     top = round((img.height - H) * focus_y)
     return img.crop((left, top, left + W, top + H))
 
@@ -162,13 +177,11 @@ TIGHT_FONT = os.path.join(BRAND, "InterTight-SemiBold.ttf")
 
 
 def tracked(d, x, y, text, font, track, fill):
-    for ch in text:
-        d.text((x, y), ch, font=font, fill=fill, anchor="ls")
-        x += font.getlength(ch) + track * font.size
+    draw_kerned(d, x, y, text, font, track * font.size, fill)
 
 
 def tracked_len(text, font, track):
-    return sum(font.getlength(ch) for ch in text) + track * font.size * (len(text) - 1)
+    return kerned_len(text, font, track * font.size)
 
 
 def title_pair_rows(c):
@@ -204,7 +217,8 @@ def font_for(name, size, wght=None):
 
 
 def typeset(c):
-    img = cover(ImageOps.exif_transpose(Image.open(c["photo"])).convert("RGB"), c.get("focus_y", 0.4))
+    img = cover(ImageOps.exif_transpose(Image.open(c["photo"])).convert("RGB"), c.get("focus_y", 0.4),
+                c.get("zoom", 1.0), c.get("focus_x", 0.5))
     img = Image.blend(img, Image.new("RGB", (W, H), (0, 0, 0)), c.get("darken", 0.35)).convert("RGBA")
     for key, top in (("gradient", False), ("top_shade", True)):
         g = c.get(key, 0)
@@ -216,20 +230,27 @@ def typeset(c):
             shade = Image.new("RGBA", (W, H), (0, 0, 0, 255))
             shade.putalpha(grad.resize((W, H)))
             img = Image.alpha_composite(img, shade)
+    if c.get("left_shade"):  # soft shade on the left only, so the subject on the right stays bright
+        g = Image.new("L", (W, 1))
+        for x in range(W):
+            g.putpixel((x, 0), round(255 * c["left_shade"] * max(0, 1 - x / (W * 0.75)) ** 1.4))
+        shade = Image.new("RGBA", (W, H), (0, 0, 0, 255))
+        shade.putalpha(g.resize((W, H)))
+        img = Image.alpha_composite(img, shade)
     d = ImageDraw.Draw(img)
     for e in c["elements"]:
         f = font_for(e["font"], e["size"], e.get("wght"))
         tr = e.get("track", 0) * e["size"]
-        width = sum(f.getlength(ch) for ch in e["text"]) + tr * (len(e["text"]) - 1)
+        width = kerned_len(e["text"], f, tr)
         x = e["x"] - {"l": 0, "m": width / 2, "r": width}[e.get("anchor", "ls")[0]]
         fill = rgb(e.get("color", "#FFFFFF")) + (255,)
         if e.get("box"):
             l, t, r, b = e["box"].get("pad", [24, 18, 24, 18])
             asc = e["size"] * 0.72
             d.rectangle([x - l, e["y"] - asc - t, x + width + r, e["y"] + b], fill=rgb(e["box"]["fill"]) + (255,))
-        for ch in e["text"]:
-            d.text((x, e["y"]), ch, font=f, fill=fill, anchor="ls")
-            x += f.getlength(ch) + tr
+        if e.get("box", {}).get("text_color"):
+            fill = rgb(e["box"]["text_color"]) + (255,)
+        draw_kerned(d, x, e["y"], e["text"], f, tr, fill)
     return img
 
 
