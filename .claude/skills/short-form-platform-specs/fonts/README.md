@@ -13,3 +13,4 @@ Render with libass via `ass=captions.ass:fontsdir=<this folder>`, or install the
   - `InstrumentSerif-Regular.ttf` (Rodrigo Fuenzalida, Jordan Egstad): the condensed editorial serif ("of carousel is winning", "the formula behind pretty photo dumps").
   - `Sacramento-Regular.ttf` (Astigmatic): the small monoline script sign-off ("design matters").
   - `ImperialScript-Regular.ttf` (Robert Leuschke): the swash script ("font").
+- `Jua-Regular.ttf` (Woowahan Brothers), Google Fonts, SIL Open Font License 1.1: chunky rounded Korean hand-lettering for small Hangul accents like 새로 (matches the 서울 in the "things to do in: seoul" reference).
