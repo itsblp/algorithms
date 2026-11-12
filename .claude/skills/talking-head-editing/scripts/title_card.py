@@ -33,6 +33,12 @@ p.add_argument("sans_line")
 p.add_argument("out")
 p.add_argument("--width", type=int, default=680)
 p.add_argument("--top", type=int, default=300, help="top of the title block (safe zone starts at 260)")
+p.add_argument("--lead-ratio", type=float, default=None,
+               help="make the serif line a small lead-in: serif size = this x the sans size (e.g. 0.69); "
+                    "the block is then sized so the widest SANS line spans --width")
+p.add_argument("--shade", type=float, default=0,
+               help="soft dark gradient baked into the PNG behind the title (0-1 at the top, fading to 0 "
+                    "~200 px below the block), for legibility on bright backgrounds. Not a shadow.")
 a = p.parse_args()
 
 
@@ -45,11 +51,18 @@ san = [t for t in a.sans_line.split("\\n") for t in t.split("\n") if t] if a.san
 
 # size the block so the widest line spans --width
 s = 100
-for _ in range(3):
+if a.lead_ratio:
+    sz = 100
+    for _ in range(3):
+        fb_ = ImageFont.truetype(SANS, sz)
+        sz = int(sz * a.width / max(width(t, fb_, SANS_TRACK) for t in san))
+    s = round(sz * a.lead_ratio)
+for _ in range(3 if not a.lead_ratio else 0):
     fs, fb = ImageFont.truetype(SERIF, s), ImageFont.truetype(SANS, round(s * SANS_RATIO))
     widest = max([width(t, fs, SERIF_TRACK) for t in ser] + [width(t, fb, SANS_TRACK) for t in san])
     s = int(s * a.width / widest)
-fs, fb = ImageFont.truetype(SERIF, s), ImageFont.truetype(SANS, round(s * SANS_RATIO))
+fs = ImageFont.truetype(SERIF, s)
+fb = ImageFont.truetype(SANS, sz if a.lead_ratio else round(s * SANS_RATIO))
 
 img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 d = ImageDraw.Draw(img)
@@ -69,7 +82,20 @@ for k, t in enumerate(ser):
         b += 0.86 * s
     draw(t, fs, SERIF_TRACK, b)
 for k, t in enumerate(san):
-    b += GAP * s if k == 0 else 0.92 * fb.size
+    if k == 0:  # serif baseline -> sans baseline: a small air gap plus the sans cap height
+        b += (0.45 * s + 0.73 * fb.size) if a.lead_ratio else GAP * s
+    else:
+        b += 0.98 * fb.size if a.lead_ratio else 0.92 * fb.size
     draw(t, fb, SANS_TRACK, b)
+if a.shade:
+    hold = b + 0.25 * fb.size          # full strength down to the bottom of the title block
+    end = min(H, hold + 200)           # then a smooth fade over 200 px
+    col = Image.new("L", (1, H), 0)
+    for y in range(int(end)):
+        t_ = 0 if y <= hold else (y - hold) / (end - hold)
+        col.putpixel((0, y), round(255 * a.shade * (1 - t_ * t_ * (3 - 2 * t_))))  # smoothstep fade
+    scrim = Image.new("RGBA", (W, H), (0, 0, 0, 255))
+    scrim.putalpha(col.resize((W, H)))
+    img = Image.alpha_composite(scrim, img)
 img.save(a.out)
-print(f"{a.out}: serif {s}px, sans {round(s * SANS_RATIO)}px, {len(ser) + len(san)} lines, last baseline y {round(b)}")
+print(f"{a.out}: serif {s}px, sans {fb.size}px, {len(ser) + len(san)} lines, last baseline y {round(b)}")
